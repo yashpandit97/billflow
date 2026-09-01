@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Receipt } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage({
   searchParams,
 }: {

@@ -2,6 +2,8 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { requirePlatformAdmin } from "@/lib/auth/admin";
 import { Toaster } from "@/components/ui/sonner";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {

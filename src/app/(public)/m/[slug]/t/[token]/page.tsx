@@ -1,6 +1,8 @@
 import { getPublicMenuAction } from "@/app/actions/public-menu";
 import { GuestMenuClient } from "@/components/menu/guest-menu-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicTableMenuPage({
   params,
 }: {
