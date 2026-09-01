@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { LandingPage } from "@/components/landing/landing-page";
-import { getMarketingUserRedirect } from "@/lib/landing/auth-redirect";
 import {
   LANDING_PRICE,
   LANDING_TRIAL_DAYS,
@@ -40,8 +38,6 @@ export const metadata: Metadata = {
   ],
 };
 
-export default async function HomePage() {
-  const redirectTo = await getMarketingUserRedirect();
-  if (redirectTo) redirect(redirectTo);
+export default function HomePage() {
   return <LandingPage />;
 }
