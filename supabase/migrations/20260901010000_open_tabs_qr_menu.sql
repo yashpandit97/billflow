@@ -1,5 +1,7 @@
 -- Restaurant open tabs + per-table QR guest menu
 
+create extension if not exists pgcrypto with schema extensions;
+
 -- ---------------------------------------------------------------------------
 -- Business flag
 -- ---------------------------------------------------------------------------
@@ -14,7 +16,7 @@ create table if not exists public.dining_tables (
   tenant_id uuid not null references public.businesses (id) on delete cascade,
   name text not null,
   sort_order integer not null default 0,
-  qr_token text not null default encode(gen_random_bytes(24), 'hex'),
+  qr_token text not null default encode(extensions.gen_random_bytes(24), 'hex'),
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

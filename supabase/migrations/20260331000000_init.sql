@@ -1,7 +1,7 @@
 -- Billflow multi-tenant schema with RLS
 -- Single shared database; isolation via tenant_id + membership
 
-create extension if not exists "pgcrypto";
+create extension if not exists "pgcrypto" with schema extensions;
 
 -- ---------------------------------------------------------------------------
 -- Enums
