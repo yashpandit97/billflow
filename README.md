@@ -93,10 +93,28 @@ Then visit `/admin`.
 
 ### Hosted Supabase
 
-1. Create a project and set env vars
+1. Create a project and set env vars (see Cloudflare section below)
 2. Run both migrations in `supabase/migrations/`
 3. Create storage buckets `logos` and `upi-qr` (or run migration policies)
 4. Set Auth redirect URLs to `{SITE_URL}/auth/callback`
+
+### Cloudflare Workers (required for production)
+
+`NEXT_PUBLIC_*` values are baked in at **build** time. Runtime-only Worker vars are not enough.
+
+Set these in **both** places, then trigger a new deploy:
+
+1. **Workers → billflow → Settings → Variables and Secrets** (runtime)
+2. **Workers → billflow → Settings → Build → Build variables and secrets** (build)
+
+| Name | Example |
+|------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key from Supabase → Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role key (encrypt / secret) |
+| `NEXT_PUBLIC_SITE_URL` | `https://billflow.yashpandit343.workers.dev` |
+
+After saving, redeploy (new build). `npm run deploy` uses `--keep-vars` so dashboard runtime vars are not wiped.
 
 ## Scripts
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { signInWithGoogleAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -34,38 +34,21 @@ export function GoogleAuthButton({
   next?: string;
   label?: string;
 }) {
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  async function handleGoogleSignIn() {
-    setPending(true);
+  function handleGoogleSignIn() {
     setError(null);
-
-    try {
-      const supabase = createClient();
-      const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-        window.location.origin;
-      const redirectTo = new URL(`${siteUrl}/auth/callback`);
-      if (next) {
-        redirectTo.searchParams.set("next", next);
+    startTransition(async () => {
+      const result = await signInWithGoogleAction(next);
+      if (result.error) {
+        setError(result.error);
+        return;
       }
-
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: redirectTo.toString(),
-        },
-      });
-
-      if (oauthError) {
-        setError(oauthError.message);
-        setPending(false);
+      if (result.url) {
+        window.location.assign(result.url);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign-in failed");
-      setPending(false);
-    }
+    });
   }
 
   return (
@@ -75,7 +58,7 @@ export function GoogleAuthButton({
         variant="outline"
         className="h-9 w-full"
         disabled={pending}
-        onClick={() => void handleGoogleSignIn()}
+        onClick={handleGoogleSignIn}
       >
         <GoogleIcon className="size-4" />
         {pending ? "Redirecting…" : label}

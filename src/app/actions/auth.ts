@@ -103,6 +103,51 @@ export async function logoutAction() {
   redirect("/login");
 }
 
+export async function signInWithGoogleAction(next?: string): Promise<
+  ActionResult & { url?: string }
+> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return {
+      error:
+        "Supabase is not configured on the server. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Cloudflare (build + runtime), then redeploy.",
+    };
+  }
+
+  try {
+    const supabase = await createClient();
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+      "http://localhost:3000";
+    const redirectTo = new URL(`${siteUrl}/auth/callback`);
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      redirectTo.searchParams.set("next", next);
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectTo.toString(),
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      return { error: supabaseUnavailableMessage(error) };
+    }
+    if (!data.url) {
+      return { error: "Could not start Google sign-in. Check the Google provider in Supabase." };
+    }
+
+    return { url: data.url };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Google sign-in failed";
+    return { error: supabaseUnavailableMessage({ message }) };
+  }
+}
+
 export async function forgotPasswordAction(
   _prev: ActionResult,
   formData: FormData
