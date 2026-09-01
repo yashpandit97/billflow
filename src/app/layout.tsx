@@ -26,6 +26,18 @@ export const metadata: Metadata = {
     siteName: "Billflow",
     locale: "en_IN",
     type: "website",
+    images: [
+      {
+        url: "/og.svg",
+        width: 1200,
+        height: 630,
+        alt: "Billflow — Simple billing for your business",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og.svg"],
   },
 };
 

@@ -14,11 +14,20 @@ export const metadata: Metadata = {
     title: "Billflow — Simple billing for your business",
     description: `Billing and invoicing for Indian SMBs. ${LANDING_TRIAL_DAYS}-day free trial. ${LANDING_PRICE}/month. No transaction fees.`,
     type: "website",
+    images: [
+      {
+        url: "/og.svg",
+        width: 1200,
+        height: 630,
+        alt: "Billflow — Simple billing for your business",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Billflow — Simple billing for your business",
     description: `Billing and invoicing for Indian SMBs. ${LANDING_TRIAL_DAYS}-day free trial.`,
+    images: ["/og.svg"],
   },
   keywords: [
     "billing software for small business",

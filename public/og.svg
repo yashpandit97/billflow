@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Billflow  Simple billing for your business">
+  <rect width="1200" height="630" fill="#0b0d0f"/>
+  <rect x="64" y="180" width="56" height="56" rx="12" fill="#d4af37"/>
+  <text x="88" y="218" text-anchor="middle" fill="#0b0d0f" font-family="system-ui, sans-serif" font-size="28" font-weight="700">B</text>
+  <text x="140" y="218" fill="#f5f5f5" font-family="system-ui, sans-serif" font-size="40" font-weight="700">Billflow</text>
+  <text x="64" y="300" fill="#f5f5f5" font-family="system-ui, sans-serif" font-size="56" font-weight="700">Simple billing for your business</text>
+  <text x="64" y="360" fill="#a7adb5" font-family="system-ui, sans-serif" font-size="28">Invoices · UPI · WhatsApp · ¹299/month · No transaction fees</text>
+</svg>
