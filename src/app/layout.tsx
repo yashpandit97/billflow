@@ -13,11 +13,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
   title: {
-    default: "Billflow",
+    default: "Billflow — Simple billing for your business",
     template: "%s · Billflow",
   },
-  description: "Multi-tenant billing and invoicing for small businesses",
+  description:
+    "Simple billing and invoicing for Indian small businesses. Create bills, share on WhatsApp, accept UPI payments. ₹299/month. No transaction fees.",
+  openGraph: {
+    siteName: "Billflow",
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

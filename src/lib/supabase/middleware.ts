@@ -54,11 +54,18 @@ export async function updateSession(request: NextRequest) {
 
   const isOnboardingRoute = pathname.startsWith("/onboarding");
   const isAdminRoute = pathname.startsWith("/admin");
+  const isMarketingRoute =
+    pathname === "/" ||
+    pathname === "/about" ||
+    pathname === "/contact" ||
+    pathname === "/privacy" ||
+    pathname === "/terms";
+
   const isPublicRoute =
     isAuthRoute ||
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/m/") ||
-    pathname === "/";
+    isMarketingRoute;
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
