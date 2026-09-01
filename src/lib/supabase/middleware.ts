@@ -1,4 +1,5 @@
 import { REFERRAL_COOKIE, normalizeReferralCode } from "@/lib/referral/constants";
+import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -30,11 +31,10 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/m/") ||
     isMarketingRoute;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseEnv = await getSupabasePublicEnv();
 
   // Without Supabase env, allow public routes and send everything else to login.
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseEnv) {
     if (isPublicRoute) {
       return supabaseResponse;
     }
@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient(supabaseEnv.url, supabaseEnv.anonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

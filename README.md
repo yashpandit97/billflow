@@ -100,21 +100,30 @@ Then visit `/admin`.
 
 ### Cloudflare Workers (required for production)
 
-`NEXT_PUBLIC_*` values are baked in at **build** time. Runtime-only Worker vars are not enough.
+`NEXT_PUBLIC_*` is baked into the client at **build** time. If those were missing during the Cloudflare build, they stay empty forever — setting only runtime vars does not fix the browser.
 
-Set these in **both** places, then trigger a new deploy:
+Do this:
 
-1. **Workers → billflow → Settings → Variables and Secrets** (runtime)
-2. **Workers → billflow → Settings → Build → Build variables and secrets** (build)
+1. **Workers → billflow → Settings → Variables and Secrets** (runtime — auth/server):
 
 | Name | Example |
 |------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key from Supabase → Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role key (encrypt / secret) |
-| `NEXT_PUBLIC_SITE_URL` | `https://billflow.yashpandit343.workers.dev` |
+| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `SUPABASE_ANON_KEY` | anon / publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role (encrypt) |
+| `SITE_URL` | `https://billflow.yashpandit343.workers.dev` |
 
-After saving, redeploy (new build). `npm run deploy` uses `--keep-vars` so dashboard runtime vars are not wiped.
+2. **Workers → billflow → Settings → Build → Build variables and secrets** (so the client bundle gets real values):
+
+| Name | Same value as |
+|------|----------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `SUPABASE_URL` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `SUPABASE_ANON_KEY` |
+| `NEXT_PUBLIC_SITE_URL` | `SITE_URL` |
+
+3. Trigger a **new deploy** after saving.
+
+`npm run deploy` uses `--keep-vars` so dashboard runtime vars are not wiped.
 
 ## Scripts
 
