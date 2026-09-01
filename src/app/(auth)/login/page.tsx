@@ -5,9 +5,13 @@ import Link from "next/link";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const params = await searchParams;
+  const authError =
+    params.error === "auth"
+      ? "Google sign-in failed. Please try again or use email."
+      : undefined;
 
   return (
     <AuthShell
@@ -16,13 +20,16 @@ export default async function LoginPage({
       footer={
         <>
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
+          <Link
+            href="/signup"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
             Sign up
           </Link>
         </>
       }
     >
-      <LoginForm next={params.next} />
+      <LoginForm next={params.next} authError={authError} />
     </AuthShell>
   );
 }
