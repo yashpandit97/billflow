@@ -1,33 +1,57 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BrandLogo({
   className,
   href = "/",
   size = "default",
+  showWordmark = true,
 }: {
   className?: string;
   href?: string;
-  size?: "default" | "sm";
+  size?: "default" | "sm" | "lg";
+  showWordmark?: boolean;
 }) {
-  const iconSize = size === "sm" ? "size-7 rounded-md" : "size-8 rounded-lg";
-  const textSize = size === "sm" ? "text-base" : "text-lg";
+  const iconPx = size === "sm" ? 28 : size === "lg" ? 40 : 32;
+  const textSize =
+    size === "sm" ? "text-base" : size === "lg" ? "text-xl" : "text-lg";
 
   return (
     <Link
       href={href}
       className={cn("flex items-center gap-2 font-semibold tracking-tight", className)}
     >
-      <span
-        className={cn(
-          "flex items-center justify-center bg-primary text-primary-foreground",
-          iconSize
-        )}
-      >
-        <Receipt className={size === "sm" ? "size-3.5" : "size-4"} />
-      </span>
-      <span className={textSize}>Billflow</span>
+      <Image
+        src="/logo.png"
+        alt="BillMoney"
+        width={iconPx}
+        height={iconPx}
+        className="shrink-0"
+        priority
+      />
+      {showWordmark ? <span className={textSize}>BillMoney</span> : null}
     </Link>
+  );
+}
+
+/** Non-link mark for sidebars and locked chrome */
+export function BrandMark({
+  className,
+  size = 32,
+}: {
+  className?: string;
+  size?: number;
+}) {
+  return (
+    <Image
+      src="/logo.png"
+      alt=""
+      width={size}
+      height={size}
+      className={cn("shrink-0", className)}
+      aria-hidden
+      priority
+    />
   );
 }

@@ -82,7 +82,7 @@ export function LandingFooter() {
 
         <Separator className="my-8" />
         <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Billflow. All rights reserved.
+          © {new Date().getFullYear()} BillMoney. All rights reserved.
         </p>
       </div>
     </footer>

@@ -73,7 +73,7 @@ export default async function DashboardPage() {
 
       {trialEnds ? (
         <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-          Free trial until <strong>{trialEnds}</strong>. Then ₹299/month for your
+          Free trial until <strong>{trialEnds}</strong>. Then ₹999/month for your
           whole team.
         </div>
       ) : null}

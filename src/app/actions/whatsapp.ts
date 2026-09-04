@@ -8,12 +8,15 @@ import {
   invoicePdfFilename,
 } from "@/lib/invoice/generate-pdf";
 import { normalizeWhatsAppPhone } from "@/lib/whatsapp/phone";
+import {
+  isCloudApiReady,
+  loadPlatformWhatsAppConfig,
+} from "@/lib/whatsapp/platform-config";
 import { sendInvoiceViaWhatsApp } from "@/lib/whatsapp/sendInvoice";
 import {
   buildInvoiceWhatsAppText,
   buildWaMeDeepLink,
 } from "@/lib/whatsapp/templates";
-import type { WhatsAppTenantConfig } from "@/lib/whatsapp/types";
 import type {
   Bill,
   BillItem,
@@ -27,6 +30,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type WhatsAppActionResult = {
   error?: string;
   success?: string;
+  warning?: string;
   deliveryId?: string;
   deeplinkUrl?: string;
   cloudApiReady?: boolean;
@@ -45,27 +49,6 @@ type BillBundle =
       customer: Customer | null;
       items: BillItem[];
     };
-
-async function loadTenantWhatsAppConfig(
-  supabase: SupabaseClient,
-  tenantId: string
-): Promise<WhatsAppTenantConfig> {
-  const { data } = await supabase
-    .from("whatsapp_settings")
-    .select(
-      "whatsapp_enabled, whatsapp_business_account_id, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_message_template"
-    )
-    .eq("business_id", tenantId)
-    .maybeSingle();
-
-  return {
-    enabled: Boolean(data?.whatsapp_enabled),
-    businessAccountId: data?.whatsapp_business_account_id ?? null,
-    phoneNumberId: data?.whatsapp_phone_number_id ?? null,
-    accessToken: data?.whatsapp_access_token ?? null,
-    messageTemplate: data?.whatsapp_message_template ?? "invoice_delivery",
-  };
-}
 
 async function loadBillBundle(billId: string): Promise<BillBundle> {
   const { supabase, tenantId, business } = await getActiveMembership();
@@ -122,7 +105,7 @@ export async function getWhatsAppSendContextAction(billId: string): Promise<{
   if (!bundle.ok) return { error: bundle.error };
 
   const { supabase, tenantId, business, bill, customer } = bundle;
-  const config = await loadTenantWhatsAppConfig(supabase, tenantId);
+  const config = await loadPlatformWhatsAppConfig();
   const amountFormatted = formatCurrency(bill.total, {
     code: business.currency,
     locale: business.locale,
@@ -147,10 +130,7 @@ export async function getWhatsAppSendContextAction(billId: string): Promise<{
   }
 
   return {
-    cloudApiReady:
-      config.enabled &&
-      Boolean(config.phoneNumberId) &&
-      Boolean(config.accessToken),
+    cloudApiReady: isCloudApiReady(config),
     customerName: customer?.name ?? null,
     phone: customer?.phone ?? null,
     phoneDisplay,
@@ -203,7 +183,7 @@ export async function sendInvoiceWhatsAppAction(
     console.error("invoice pdf generation failed", err);
   }
 
-  const config = await loadTenantWhatsAppConfig(supabase, tenantId);
+  const config = await loadPlatformWhatsAppConfig();
   const amountFormatted = invoiceData.formatted.total;
 
   const { data: delivery, error: insertError } = await supabase
@@ -278,6 +258,7 @@ export async function sendInvoiceWhatsAppAction(
       result.status === "sent"
         ? "Invoice sent via WhatsApp (awaiting delivery confirmation)"
         : "WhatsApp send recorded",
+    warning: result.warning,
     deliveryId: delivery.id,
     deeplinkUrl: result.deeplinkUrl,
     cloudApiReady: true,

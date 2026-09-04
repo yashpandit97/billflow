@@ -31,7 +31,7 @@ export function ReferAndEarnPanel({
   status: string;
   isTrial: boolean;
 }) {
-  const shareText = buildReferralShareMessage("Billflow", referralLink);
+  const shareText = buildReferralShareMessage("BillMoney", referralLink);
 
   async function copyLink() {
     await navigator.clipboard.writeText(referralLink);
@@ -42,7 +42,7 @@ export function ReferAndEarnPanel({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Try Billflow",
+          title: "Try BillMoney",
           text: shareText,
           url: referralLink,
         });
@@ -62,7 +62,7 @@ export function ReferAndEarnPanel({
           <h2 className="text-lg font-semibold">Refer & Earn</h2>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">
-          Share Billflow with another business. When they become a paying customer,
+          Share BillMoney with another business. When they become a paying customer,
           you get <strong>1 free month</strong> on your subscription.
         </p>
 

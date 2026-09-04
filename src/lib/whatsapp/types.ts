@@ -6,7 +6,8 @@ export type WhatsAppDeliveryStatus =
   | "delivered"
   | "failed";
 
-export type WhatsAppTenantConfig = {
+/** Platform Cloud API credentials (single sender for all businesses). */
+export type WhatsAppCloudConfig = {
   enabled: boolean;
   businessAccountId: string | null;
   phoneNumberId: string | null;
@@ -14,6 +15,9 @@ export type WhatsAppTenantConfig = {
   accessToken: string | null;
   messageTemplate: string | null;
 };
+
+/** @deprecated Use WhatsAppCloudConfig — kept as alias during rename */
+export type WhatsAppTenantConfig = WhatsAppCloudConfig;
 
 export type WhatsAppPlatformConfig = {
   enabled: boolean;
@@ -39,6 +43,8 @@ export type SendInvoiceWhatsAppResult =
       /** True when only a deeplink was produced (manual send) */
       deeplinkUrl?: string;
       status: WhatsAppDeliveryStatus;
+      /** Soft warning when send succeeded without PDF attachment */
+      warning?: string;
     }
   | {
       ok: false;

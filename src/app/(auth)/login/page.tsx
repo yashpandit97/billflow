@@ -16,7 +16,7 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Welcome back"
-      description="Sign in to your Billflow account."
+      description="Sign in to your BillMoney account."
       footer={
         <>
           Don&apos;t have an account?{" "}

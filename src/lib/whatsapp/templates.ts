@@ -23,19 +23,42 @@ export function buildInvoiceWhatsAppText(input: {
   ].join("\n");
 }
 
-/** Cloud API template payload shape (Phase 2). */
-export function buildInvoiceTemplateComponents(input: SendInvoiceWhatsAppInput) {
-  return [
-    {
-      type: "body",
+/**
+ * Cloud API template components for invoice_delivery.
+ * When mediaId is set, includes a document header (PDF attachment).
+ */
+export function buildInvoiceTemplateComponents(
+  input: SendInvoiceWhatsAppInput,
+  options?: { mediaId?: string; filename?: string }
+) {
+  const components: Array<Record<string, unknown>> = [];
+
+  if (options?.mediaId) {
+    components.push({
+      type: "header",
       parameters: [
-        { type: "text", text: input.customerName.split(/\s+/)[0] || "there" },
-        { type: "text", text: input.businessName },
-        { type: "text", text: input.invoiceNumber },
-        { type: "text", text: input.amountFormatted },
+        {
+          type: "document",
+          document: {
+            id: options.mediaId,
+            filename: options.filename || input.pdfFilename || "invoice.pdf",
+          },
+        },
       ],
-    },
-  ];
+    });
+  }
+
+  components.push({
+    type: "body",
+    parameters: [
+      { type: "text", text: input.customerName.split(/\s+/)[0] || "there" },
+      { type: "text", text: input.businessName },
+      { type: "text", text: input.invoiceNumber },
+      { type: "text", text: input.amountFormatted },
+    ],
+  });
+
+  return components;
 }
 
 export function buildWaMeDeepLink(e164: string, text: string): string {

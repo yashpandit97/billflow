@@ -20,7 +20,7 @@ export function LandingCompare() {
             Easier than traditional billing software
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Billflow is built for businesses that want billing done simply — without
+            BillMoney is built for businesses that want billing done simply — without
             enterprise complexity or hidden fees.
           </p>
         </div>
@@ -33,7 +33,7 @@ export function LandingCompare() {
                   Feature
                 </th>
                 <th className="px-4 py-3 text-center font-semibold text-primary sm:px-6" scope="col">
-                  Billflow
+                  BillMoney
                 </th>
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground sm:px-6" scope="col">
                   Traditional billing software

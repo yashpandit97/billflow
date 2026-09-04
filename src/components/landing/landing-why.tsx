@@ -57,7 +57,7 @@ export function LandingWhy() {
           </h2>
           <p className="mt-4 text-pretty text-muted-foreground">
             Traditional billing and accounting software can feel unnecessarily
-            complicated for small businesses. Billflow focuses on what matters:
+            complicated for small businesses. BillMoney focuses on what matters:
             fast billing, professional invoices, and clear pricing.
           </p>
         </div>

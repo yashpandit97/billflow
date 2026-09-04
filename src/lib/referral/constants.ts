@@ -1,4 +1,4 @@
-export const REFERRAL_COOKIE = "billflow_ref";
+export const REFERRAL_COOKIE = "billmoney_ref";
 
 export function normalizeReferralCode(code: string | null | undefined): string | null {
   if (!code) return null;

@@ -1,6 +1,7 @@
 "use client";
 
 import { logoutAction } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,40 +30,56 @@ export function TopBar({
           Fast billing for {businessName}
         </p>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-sm hover:bg-muted">
-          <User className="size-4" />
-          <span className="hidden max-w-[140px] truncate sm:inline">
-            {userName || userEmail}
-          </span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium text-foreground">
-                {userName || "Account"}
-              </p>
-              <p className="text-xs font-normal">{userEmail}</p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <Link href="/settings" className="flex w-full items-center gap-1.5">
-              <Settings className="size-4" />
-              Settings
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              void logoutAction();
-            }}
-          >
-            <LogOut className="size-4" />
-            Log out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5 border-border text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => void logoutAction()}
+        >
+          <LogOut className="size-3.5" />
+          Log out
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-sm hover:bg-muted">
+            <User className="size-4" />
+            <span className="hidden max-w-[140px] truncate sm:inline">
+              {userName || userEmail}
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {userName || "Account"}
+                </p>
+                <p className="text-xs font-normal">{userEmail}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Link
+                href="/settings"
+                className="flex w-full items-center gap-1.5"
+              >
+                <Settings className="size-4" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              onClick={() => {
+                void logoutAction();
+              }}
+            >
+              <LogOut className="size-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }

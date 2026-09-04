@@ -1,5 +1,5 @@
 import { SettingsClient } from "@/components/settings/settings-client";
-import { getWhatsAppSettingsPublic } from "@/app/actions/whatsapp-settings";
+import { getWhatsAppSendAvailability } from "@/app/actions/whatsapp-settings";
 import { getSubscriptionOverviewAction } from "@/app/actions/subscription";
 import { getActiveMembership, getProfile } from "@/lib/auth/session";
 
@@ -12,7 +12,7 @@ export default async function SettingsPage() {
     { count: billCount },
     { data: paymentSettings },
     { data: tables },
-    whatsappSettings,
+    whatsappAvailability,
     subscriptionOverview,
   ] = await Promise.all([
     supabase
@@ -35,7 +35,7 @@ export default async function SettingsPage() {
       .eq("is_active", true)
       .order("sort_order")
       .order("name"),
-    getWhatsAppSettingsPublic(),
+    getWhatsAppSendAvailability(),
     role === "owner" || role === "admin"
       ? getSubscriptionOverviewAction()
       : Promise.resolve(null),
@@ -57,7 +57,7 @@ export default async function SettingsPage() {
         userEmail={user.email ?? ""}
         paymentSettings={paymentSettings}
         tables={tables ?? []}
-        whatsappSettings={whatsappSettings}
+        cloudApiReady={whatsappAvailability.cloudApiReady}
         subscriptionOverview={
           subscriptionOverview && !("error" in subscriptionOverview)
             ? subscriptionOverview

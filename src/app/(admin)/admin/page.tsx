@@ -44,7 +44,7 @@ export default async function AdminOverviewPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Platform overview</h1>
         <p className="text-sm text-muted-foreground">
-          ₹299/month per business · 30-day free trial · no transaction fees
+          ₹999/month per business · 30-day free trial · no transaction fees
         </p>
       </div>
 

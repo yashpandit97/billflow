@@ -1,5 +1,7 @@
 "use client";
 
+import { logoutAction } from "@/app/actions/auth";
+import { BrandMark } from "@/components/landing/brand-logo";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -8,13 +10,11 @@ import {
   LineChart,
   LogOut,
   MessageCircle,
-  Receipt,
   Users,
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logoutAction } from "@/app/actions/auth";
 
 const nav = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
@@ -32,11 +32,9 @@ export function AdminSidebar() {
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
       <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-        <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <Receipt className="size-3.5" />
-        </span>
+        <BrandMark size={32} />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">Billflow Admin</p>
+          <p className="truncate text-sm font-semibold">BillMoney Admin</p>
           <p className="truncate text-xs text-muted-foreground">Platform ops</p>
         </div>
       </div>
@@ -67,7 +65,7 @@ export function AdminSidebar() {
         <button
           type="button"
           onClick={() => void logoutAction()}
-          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="size-4" />
           Log out

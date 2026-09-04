@@ -28,6 +28,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     isAuthRoute ||
     pathname.startsWith("/auth/callback") ||
+    pathname.startsWith("/api/whatsapp/webhook") ||
     pathname.startsWith("/m/") ||
     isMarketingRoute;
 
@@ -120,7 +121,9 @@ export async function updateSession(request: NextRequest) {
     !isAuthRoute &&
     !isAdminRoute &&
     !isMarketingRoute &&
-    pathname !== "/auth/callback"
+    !pathname.startsWith("/auth/callback") &&
+    !pathname.startsWith("/api/whatsapp/webhook") &&
+    !pathname.startsWith("/m/")
   ) {
     const { data: memberships } = await supabase
       .from("business_members")

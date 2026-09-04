@@ -3,7 +3,7 @@ import { MarketingShell } from "@/components/landing/marketing-shell";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Billflow privacy policy.",
+  description: "BillMoney privacy policy.",
 };
 
 export default function PrivacyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           <section>
             <h2>Overview</h2>
             <p>
-              Billflow (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) provides billing and invoicing
+              BillMoney (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) provides billing and invoicing
               software for businesses. This policy describes how we handle information
               when you use our website and application.
             </p>
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           <section>
             <h2>How we use information</h2>
             <p>
-              We use your information to operate Billflow, authenticate users, generate
+              We use your information to operate BillMoney, authenticate users, generate
               invoices, provide reports, and improve the product. We do not sell your
               business data.
             </p>
@@ -48,8 +48,8 @@ export default function PrivacyPage() {
             <h2>Contact</h2>
             <p>
               For privacy questions, contact{" "}
-              <a href="mailto:support@billflow.app" className="text-primary hover:underline">
-                support@billflow.app
+              <a href="mailto:support@billmoney.app" className="text-primary hover:underline">
+                support@billmoney.app
               </a>
               .
             </p>

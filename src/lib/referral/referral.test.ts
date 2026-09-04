@@ -39,10 +39,10 @@ describe("invoice share message", () => {
 describe("referral share message", () => {
   it("includes app name, trial, and link", () => {
     const text = buildReferralShareMessage(
-      "Billflow",
+      "BillMoney",
       "https://app.example/signup?ref=ABC123"
     );
-    expect(text).toContain("Billflow");
+    expect(text).toContain("BillMoney");
     expect(text).toContain("30 days");
     expect(text).toContain("ABC123");
   });

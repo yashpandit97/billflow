@@ -1,6 +1,6 @@
-/** ₹299/month in minor units (paise) */
-export const SUBSCRIPTION_AMOUNT_MINOR = 29900;
-export const SUBSCRIPTION_AMOUNT_MAJOR = 299;
+/** ₹999/month in minor units (paise) — one plan, all features */
+export const SUBSCRIPTION_AMOUNT_MINOR = 99900;
+export const SUBSCRIPTION_AMOUNT_MAJOR = 999;
 export const SUBSCRIPTION_CURRENCY = "INR";
 export const TRIAL_DAYS = 30;
 

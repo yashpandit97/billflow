@@ -1,11 +1,23 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { timingSafeEqual } from "crypto";
 
 /**
- * WhatsApp Cloud API webhook (Phase 2).
- * Verifies Meta challenge and upgrades delivery status to delivered when confirmed.
+ * WhatsApp Cloud API webhook.
+ * Verifies Meta challenge and upgrades delivery status when confirmed.
  * Never exposes tokens or tenant internals.
  */
+function tokensMatch(provided: string, expected: string): boolean {
+  try {
+    const a = Buffer.from(provided, "utf8");
+    const b = Buffer.from(expected, "utf8");
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const mode = url.searchParams.get("hub.mode");
@@ -13,8 +25,17 @@ export async function GET(request: Request) {
   const challenge = url.searchParams.get("hub.challenge");
 
   const expected = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
-  if (mode === "subscribe" && expected && token === expected && challenge) {
-    return new NextResponse(challenge, { status: 200 });
+  if (
+    mode === "subscribe" &&
+    expected &&
+    token &&
+    challenge &&
+    tokensMatch(token, expected)
+  ) {
+    return new NextResponse(challenge, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -33,7 +54,7 @@ export async function POST(request: Request) {
     const expected =
       "sha256=" +
       crypto.createHmac("sha256", appSecret).update(rawBody).digest("hex");
-    if (signature !== expected) {
+    if (!tokensMatch(signature, expected)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }

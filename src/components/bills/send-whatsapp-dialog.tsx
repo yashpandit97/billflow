@@ -81,6 +81,7 @@ export function SendWhatsAppDialog({
         return;
       }
       toast.success(res.success);
+      if (res.warning) toast.message(res.warning);
       onOpenChange(false);
       router.refresh();
     });
@@ -157,14 +158,14 @@ export function SendWhatsAppDialog({
             </div>
             {!ctx?.cloudApiReady ? (
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Official WhatsApp Business API is not connected for this
-                business. Use <span className="font-medium">Open WhatsApp</span>{" "}
-                to send manually (you attach the PDF yourself).
+                Official WhatsApp sending is not available yet. Use{" "}
+                <span className="font-medium">Open WhatsApp</span> to send
+                manually (you attach the PDF yourself).
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Sending uses the WhatsApp Business Cloud API. Delivery is only
-                marked delivered after provider confirmation.
+                Sent from BillMoney’s WhatsApp Business number. Delivery is
+                marked delivered only after provider confirmation.
               </p>
             )}
           </div>

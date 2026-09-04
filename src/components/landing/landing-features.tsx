@@ -352,7 +352,7 @@ export function LandingFeatures() {
             "Configure your UPI ID in settings",
             "Upload your bank or GPay QR",
             "QR appears on UPI invoices automatically",
-            "Billflow does not process payments for you",
+            "BillMoney does not process payments for you",
           ]}
           icon={QrCode}
           visual={<UpiVisual />}
@@ -376,7 +376,7 @@ export function LandingFeatures() {
         <FeatureBlock
           eyebrow="Mobile billing"
           title="Your phone is your billing counter."
-          description="No computer? No problem. Billflow works beautifully on phones and tablets — designed for shop counters, delivery counters, and on-the-go billing."
+          description="No computer? No problem. BillMoney works beautifully on phones and tablets — designed for shop counters, delivery counters, and on-the-go billing."
           bullets={[
             "Fast product search on mobile",
             "Large touch-friendly controls",

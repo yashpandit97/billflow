@@ -1,10 +1,16 @@
+import { WhatsAppWebhookSetupCard } from "@/components/settings/whatsapp-webhook-setup-card";
+import { PlatformWhatsAppSettingsForm } from "@/components/admin/platform-whatsapp-settings-form";
+import { getPlatformWhatsAppSettingsPublic } from "@/app/actions/whatsapp-settings";
 import { requirePlatformAdmin } from "@/lib/auth/admin";
 import { formatCurrency } from "@/lib/currency/format";
+import { getWhatsAppWebhookPublicInfo } from "@/lib/whatsapp/webhook-info";
 import { format } from "date-fns";
 import { MessageCircle } from "lucide-react";
 
 export default async function AdminWhatsAppPage() {
   const { supabase } = await requirePlatformAdmin();
+  const webhookInfo = getWhatsAppWebhookPublicInfo();
+  const platformSettings = await getPlatformWhatsAppSettingsPublic();
 
   const [
     { count: total },
@@ -74,8 +80,20 @@ export default async function AdminWhatsAppPage() {
           WhatsApp Messages
         </h1>
         <p className="text-sm text-muted-foreground">
-          Platform-wide invoice delivery monitoring. Phone numbers are masked.
+          All invoices are sent from BillMoney’s WhatsApp Business number.
+          Phone numbers are masked.
         </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PlatformWhatsAppSettingsForm settings={platformSettings} />
+        <div className="max-w-xl">
+          <WhatsAppWebhookSetupCard
+            callbackUrl={webhookInfo.callbackUrl}
+            verifyTokenConfigured={webhookInfo.verifyTokenConfigured}
+            appSecretConfigured={webhookInfo.appSecretConfigured}
+          />
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

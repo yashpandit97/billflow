@@ -29,14 +29,9 @@ import type {
   DiningTable,
   PaymentSettings,
   Profile,
-  WhatsAppSettingsPublic,
 } from "@/types/database";
 import { useActionState, useEffect, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  updateWhatsAppSettingsAction,
-  type WhatsAppSettingsResult,
-} from "@/app/actions/whatsapp-settings";
 
 const empty: SettingsResult = {};
 
@@ -55,7 +50,7 @@ export function SettingsClient({
   userEmail,
   paymentSettings,
   tables,
-  whatsappSettings,
+  cloudApiReady,
   subscriptionOverview,
   canManageBilling = false,
 }: {
@@ -66,7 +61,7 @@ export function SettingsClient({
   userEmail: string;
   paymentSettings: PaymentSettings | null;
   tables: DiningTable[];
-  whatsappSettings: WhatsAppSettingsPublic | null;
+  cloudApiReady: boolean;
   subscriptionOverview?: {
     priceLabel: string;
     status: string;
@@ -100,10 +95,6 @@ export function SettingsClient({
     updatePaymentSettingsAction,
     empty
   );
-  const [waState, waAction] = useActionState(
-    updateWhatsAppSettingsAction,
-    {} as WhatsAppSettingsResult
-  );
   const [qrState, qrAction] = useActionState(
     async (_prev: PaymentActionResult, formData: FormData) =>
       uploadUpiQrAction(formData),
@@ -118,7 +109,6 @@ export function SettingsClient({
   useToastResult(logoState);
   useToastResult(payState);
   useToastResult(qrState);
-  useToastResult(waState);
 
   return (
     <Tabs defaultValue="profile" className="space-y-6">
@@ -396,75 +386,27 @@ export function SettingsClient({
       </TabsContent>
 
       <TabsContent value="whatsapp" className="rounded-xl border border-border bg-card p-4 sm:p-6">
-        <form action={waAction} className="max-w-lg space-y-4">
+        <div className="max-w-lg space-y-3">
           <div>
-            <h3 className="font-medium">WhatsApp Business (Cloud API)</h3>
-            <p className="text-sm text-muted-foreground">
-              Optional. When connected, invoices can be sent via the official
-              WhatsApp Business Platform. Access tokens are stored server-side
-              only and never shown in the browser. Without this, staff can still
-              use Open WhatsApp (manual).
+            <h3 className="font-medium">WhatsApp invoices</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Invoice messages are sent from BillMoney’s WhatsApp Business
+              number (not your personal WhatsApp). Customers still see your
+              business name in the message body.
             </p>
           </div>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="whatsapp_enabled"
-              defaultChecked={whatsappSettings?.whatsapp_enabled}
-              className="mt-0.5 size-4 rounded border"
-            />
-            <span>Enable official WhatsApp sending for this business</span>
-          </label>
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp_phone_number_id">Phone number ID</Label>
-            <Input
-              id="whatsapp_phone_number_id"
-              name="whatsapp_phone_number_id"
-              defaultValue={whatsappSettings?.whatsapp_phone_number_id ?? ""}
-              placeholder="Meta phone number ID"
-              autoComplete="off"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp_business_account_id">
-              WhatsApp Business Account ID
-            </Label>
-            <Input
-              id="whatsapp_business_account_id"
-              name="whatsapp_business_account_id"
-              defaultValue={
-                whatsappSettings?.whatsapp_business_account_id ?? ""
-              }
-              autoComplete="off"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp_access_token">Access token</Label>
-            <Input
-              id="whatsapp_access_token"
-              name="whatsapp_access_token"
-              type="password"
-              placeholder={
-                whatsappSettings?.has_access_token
-                  ? "••••••••  (leave blank to keep current)"
-                  : "Paste token (never shown again)"
-              }
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp_message_template">Template name</Label>
-            <Input
-              id="whatsapp_message_template"
-              name="whatsapp_message_template"
-              defaultValue={
-                whatsappSettings?.whatsapp_message_template ??
-                "invoice_delivery"
-              }
-            />
-          </div>
-          <SubmitButton>Save WhatsApp settings</SubmitButton>
-        </form>
+          <p
+            className={
+              cloudApiReady
+                ? "rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
+                : "rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground"
+            }
+          >
+            {cloudApiReady
+              ? "Official WhatsApp sending is available for your invoices."
+              : "Official WhatsApp sending is not connected yet. You can still use Open WhatsApp to send manually."}
+          </p>
+        </div>
       </TabsContent>
 
       <TabsContent value="tax" className="rounded-xl border border-border bg-card p-4 sm:p-6">
@@ -537,14 +479,21 @@ export function SettingsClient({
             <p className="text-sm text-muted-foreground">{userEmail}</p>
           </div>
           <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
-            <p className="font-medium">₹299/month per business</p>
+            <p className="font-medium">₹999/month per business</p>
+            <p className="text-sm text-muted-foreground">
+              One plan, all features. Covers your whole team — no per-seat fees.
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Your first 30 days are free. One subscription covers your whole
               team — owners and staff. Manage billing and referrals in the Billing
               tab.
             </p>
           </div>
-          <Button variant="outline" onClick={() => void logoutAction()}>
+          <Button
+            variant="destructive"
+            className="w-full sm:w-auto"
+            onClick={() => void logoutAction()}
+          >
             Log out
           </Button>
         </div>

@@ -258,6 +258,20 @@ export interface WhatsAppSettingsPublic {
   updated_at: string;
 }
 
+/** Platform WhatsApp sender (BillMoney's Meta number) — no access token. */
+export interface PlatformWhatsAppSettingsPublic {
+  enabled: boolean;
+  meta_app_id: string | null;
+  whatsapp_business_account_id: string | null;
+  whatsapp_phone_number_id: string | null;
+  display_phone_number: string | null;
+  default_template_name: string | null;
+  has_access_token: boolean;
+  /** True when Worker env credentials override DB */
+  env_override_active: boolean;
+  updated_at: string;
+}
+
 export interface WhatsAppInvoiceDelivery {
   id: string;
   tenant_id: string;

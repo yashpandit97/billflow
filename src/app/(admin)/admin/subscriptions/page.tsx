@@ -21,7 +21,7 @@ export default async function AdminSubscriptionsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Subscriptions</h1>
         <p className="text-sm text-muted-foreground">
-          ₹299/month per business tenant. One subscription covers all staff users.
+          ₹999/month per business tenant. One subscription covers all staff users.
         </p>
       </div>
 

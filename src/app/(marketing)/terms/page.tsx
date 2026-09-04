@@ -4,7 +4,7 @@ import { LANDING_PRICE, LANDING_TRIAL_DAYS } from "@/lib/landing/constants";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Billflow terms of service.",
+  description: "BillMoney terms of service.",
 };
 
 export default function TermsPage() {
@@ -17,15 +17,15 @@ export default function TermsPage() {
           <section>
             <h2>Service</h2>
             <p>
-              Billflow provides billing and invoicing software on a subscription basis.
-              By using Billflow, you agree to these terms.
+              BillMoney provides billing and invoicing software on a subscription basis.
+              By using BillMoney, you agree to these terms.
             </p>
           </section>
           <section>
             <h2>Subscription</h2>
             <p>
               New businesses receive a {LANDING_TRIAL_DAYS}-day free trial. After the
-              trial, the subscription is {LANDING_PRICE}/month unless cancelled. Billflow
+              trial, the subscription is {LANDING_PRICE}/month unless cancelled. BillMoney
               does not charge transaction fees on your sales.
             </p>
           </section>
@@ -33,7 +33,7 @@ export default function TermsPage() {
             <h2>Your responsibilities</h2>
             <p>
               You are responsible for the accuracy of your business information, invoices,
-              tax details, and payment configurations including UPI QR codes. Billflow does
+              tax details, and payment configurations including UPI QR codes. BillMoney does
               not process customer payments on your behalf.
             </p>
           </section>
@@ -41,15 +41,15 @@ export default function TermsPage() {
             <h2>Acceptable use</h2>
             <p>
               You agree not to misuse the service, attempt unauthorized access, or use
-              Billflow for unlawful purposes.
+              BillMoney for unlawful purposes.
             </p>
           </section>
           <section>
             <h2>Contact</h2>
             <p>
               Questions about these terms? Contact{" "}
-              <a href="mailto:support@billflow.app" className="text-primary hover:underline">
-                support@billflow.app
+              <a href="mailto:support@billmoney.app" className="text-primary hover:underline">
+                support@billmoney.app
               </a>
               .
             </p>

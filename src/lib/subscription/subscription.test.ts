@@ -33,10 +33,10 @@ function makeSub(
 }
 
 describe("subscription pricing", () => {
-  it("uses ₹299/month in minor units", () => {
-    expect(SUBSCRIPTION_AMOUNT_MAJOR).toBe(299);
-    expect(SUBSCRIPTION_AMOUNT_MINOR).toBe(29900);
-    expect(formatSubscriptionPrice("en-IN")).toContain("299");
+  it("uses ₹999/month in minor units", () => {
+    expect(SUBSCRIPTION_AMOUNT_MAJOR).toBe(999);
+    expect(SUBSCRIPTION_AMOUNT_MINOR).toBe(99900);
+    expect(formatSubscriptionPrice("en-IN")).toContain("999");
   });
 
   it("trial is 30 days", () => {

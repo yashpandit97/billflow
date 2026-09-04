@@ -1,8 +1,8 @@
-# Billflow
+# BillMoney
 
 Multi-tenant billing SaaS for small businesses. One deployment, many tenants, strong RLS isolation.
 
-**Business model:** **₹299/month per business** (one subscription covers all staff). **30-day free trial** on signup. Referrals earn **1 free month** when the referred business becomes a paying customer. No transaction-based platform fees on customer invoices.
+**Business model:** **₹999/month per business** (one subscription covers all staff). **30-day free trial** on signup. Referrals earn **1 free month** when the referred business becomes a paying customer. No transaction-based platform fees on customer invoices.
 
 ## Tech stack
 
@@ -14,19 +14,19 @@ Multi-tenant billing SaaS for small businesses. One deployment, many tenants, st
 ## Architecture
 
 ```
-Platform (Billflow)
+Platform (BillMoney)
   ├── Platform admins → /admin (subscriptions, referrals, businesses, users)
   └── Tenants / Businesses
         ├── Members (owner | admin | staff) — no per-seat billing
         ├── Products, customers, bills
-        ├── Subscription (₹299/mo) + Refer & Earn
+        ├── Subscription (₹999/mo) + Refer & Earn
         ├── Payment settings (UPI QR upload)
         └── Reports (tenant-scoped only)
 ```
 
 ### Subscription billing
 
-- **₹299/month** per business tenant (integer paise in DB: `29900`)
+- **₹999/month** per business tenant (integer paise in DB: `99900`)
 - **30-day free trial** starts when the business is created
 - One subscription covers owner + all staff users
 - `tenant_subscriptions`, `subscription_credits`, modular payment stub (`markSubscriptionPaidAction` for MVP)
@@ -57,8 +57,14 @@ Platform (Billflow)
 ### WhatsApp invoice delivery
 
 - **Primary (MVP):** Share Invoice → native share sheet → WhatsApp with PDF + message
-- Optional Cloud API settings remain for future automated delivery
+- **Cloud API:** All tenant invoices are sent from **BillMoney’s** WhatsApp Business number (platform credentials in Admin → WhatsApp, or Worker env)
+- **Webhook (delivery receipts):** Meta Callback URL `{SITE_URL}/api/whatsapp/webhook`
+  - Set Worker runtime secrets `WHATSAPP_WEBHOOK_VERIFY_TOKEN` (same string as Meta Verify token) and optionally `WHATSAPP_APP_SECRET`
+  - Optional sender env: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_BUSINESS_ACCOUNT_ID`
+  - After Verify and save, subscribe the webhook field **messages**
+  - Create an approved Meta template named `invoice_delivery` (document header + body: customer, business, invoice #, amount)
 - Invoice creation never depends on WhatsApp success
+- Businesses do **not** connect their own WhatsApp Cloud API accounts
 
 ### Multi-tenancy / RLS
 
@@ -104,16 +110,20 @@ Then visit `/admin`.
 
 Do this:
 
-1. **Workers → billflow → Settings → Variables and Secrets** (runtime — auth/server):
+1. **Workers → billmoney → Settings → Variables and Secrets** (runtime — auth/server):
 
 | Name | Example |
 |------|---------|
 | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `SUPABASE_ANON_KEY` | anon / publishable key |
 | `SUPABASE_SERVICE_ROLE_KEY` | service_role (encrypt) |
-| `SITE_URL` | `https://billflow.yashpandit343.workers.dev` |
+| `SITE_URL` | `https://billmoney.yashpandit343.workers.dev` |
+| `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | Same random string as Meta Verify token |
+| `WHATSAPP_APP_SECRET` | Meta App Secret (optional HMAC for POST) |
+| `WHATSAPP_PHONE_NUMBER_ID` | Platform sender phone number ID (optional env override) |
+| `WHATSAPP_ACCESS_TOKEN` | Platform sender access token (optional env override) |
 
-2. **Workers → billflow → Settings → Build → Build variables and secrets** (so the client bundle gets real values):
+2. **Workers → billmoney → Settings → Build → Build variables and secrets** (so the client bundle gets real values):
 
 | Name | Same value as |
 |------|----------------|
@@ -166,4 +176,4 @@ Forced **Midnight Gold** dark UI (`html.dark`): charcoal surfaces, gold accent `
 - Dynamic UPI intent QR with amount + invoice ref
 - Staff invite emails
 - Export revenue CSV for platform ops
-# billflow
+# billmoney

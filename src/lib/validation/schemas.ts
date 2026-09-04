@@ -152,6 +152,16 @@ export const whatsappSettingsSchema = z.object({
   whatsapp_message_template: z.string().max(120).optional().or(z.literal("")),
 });
 
+export const platformWhatsAppSettingsSchema = z.object({
+  enabled: z.boolean(),
+  meta_app_id: z.string().max(120).optional().or(z.literal("")),
+  whatsapp_business_account_id: z.string().max(120).optional().or(z.literal("")),
+  whatsapp_phone_number_id: z.string().max(120).optional().or(z.literal("")),
+  whatsapp_access_token: z.string().max(2000).optional().or(z.literal("")),
+  display_phone_number: z.string().max(40).optional().or(z.literal("")),
+  default_template_name: z.string().max(120).optional().or(z.literal("")),
+});
+
 export const billItemInputSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.coerce.number().positive("Quantity must be > 0"),

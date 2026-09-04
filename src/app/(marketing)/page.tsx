@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Simple Billing Software for Small Business in India",
   description: `Create bills, professional invoices, UPI QR payments, and WhatsApp sharing for Indian small businesses. ${LANDING_TRIAL_DAYS}-day free trial, then ${LANDING_PRICE}/month. No transaction fees.`,
   openGraph: {
-    title: "Billflow — Simple billing for your business",
+    title: "BillMoney — Simple billing for your business",
     description: `Billing and invoicing for Indian SMBs. ${LANDING_TRIAL_DAYS}-day free trial. ${LANDING_PRICE}/month. No transaction fees.`,
     type: "website",
     images: [
@@ -17,13 +17,13 @@ export const metadata: Metadata = {
         url: "/og.svg",
         width: 1200,
         height: 630,
-        alt: "Billflow — Simple billing for your business",
+        alt: "BillMoney — Simple billing for your business",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Billflow — Simple billing for your business",
+    title: "BillMoney — Simple billing for your business",
     description: `Billing and invoicing for Indian SMBs. ${LANDING_TRIAL_DAYS}-day free trial.`,
     images: ["/og.svg"],
   },

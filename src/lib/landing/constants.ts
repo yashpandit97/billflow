@@ -39,7 +39,7 @@ export const LANDING_PRICING_FEATURES = [
 export const LANDING_FAQ = [
   {
     question: "Is the first month really free?",
-    answer: `Yes. New businesses get ${LANDING_TRIAL_DAYS} days to try Billflow before the ${LANDING_PRICE}/month subscription begins.`,
+    answer: `Yes. New businesses get ${LANDING_TRIAL_DAYS} days to try BillMoney before the ${LANDING_PRICE}/month subscription begins.`,
   },
   {
     question: "How much does it cost?",
@@ -48,12 +48,12 @@ export const LANDING_FAQ = [
   {
     question: "Are there transaction fees?",
     answer:
-      "No. Billflow does not take a percentage of your sales. You pay a flat monthly subscription.",
+      "No. BillMoney does not take a percentage of your sales. You pay a flat monthly subscription.",
   },
   {
     question: "Can I use it on my phone?",
     answer:
-      "Yes. Billflow is designed to work on phones, tablets, and computers.",
+      "Yes. BillMoney is designed to work on phones, tablets, and computers.",
   },
   {
     question: "Do I need a printer?",

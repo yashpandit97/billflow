@@ -6,7 +6,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="Create your account"
-      description="Start billing in minutes. 30-day free trial, then ₹299/month for your business."
+      description="Start billing in minutes. 30-day free trial, then ₹999/month for your business."
       footer={
         <>
           Already have an account?{" "}

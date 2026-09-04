@@ -3,7 +3,7 @@ import { MarketingShell } from "@/components/landing/marketing-shell";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Contact Billflow for product questions and support.",
+  description: "Contact BillMoney for product questions and support.",
 };
 
 export default function ContactPage() {
@@ -13,16 +13,16 @@ export default function ContactPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Contact</h1>
         <div className="mt-6 space-y-4 text-muted-foreground">
           <p>
-            Have a question about Billflow or need help getting started? We&apos;d love
+            Have a question about BillMoney or need help getting started? We&apos;d love
             to hear from you.
           </p>
           <p>
             Email:{" "}
             <a
-              href="mailto:support@billflow.app"
+              href="mailto:support@billmoney.app"
               className="text-primary hover:underline"
             >
-              support@billflow.app
+              support@billmoney.app
             </a>
           </p>
           <p className="text-sm">

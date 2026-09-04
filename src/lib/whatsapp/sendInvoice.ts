@@ -6,15 +6,15 @@ import {
 import type {
   SendInvoiceWhatsAppInput,
   SendInvoiceWhatsAppResult,
-  WhatsAppTenantConfig,
+  WhatsAppCloudConfig,
 } from "@/lib/whatsapp/types";
 
 /**
  * High-level send entry used by billing actions.
- * Prefers Cloud API when configured; otherwise returns deeplink fallback metadata.
+ * Prefers platform Cloud API when configured; otherwise deeplink fallback.
  */
 export async function sendInvoiceViaWhatsApp(options: {
-  config: WhatsAppTenantConfig;
+  config: WhatsAppCloudConfig;
   input: SendInvoiceWhatsAppInput;
   /** Force deeplink-only path (Open WhatsApp) */
   preferDeeplink?: boolean;
@@ -40,7 +40,7 @@ export async function sendInvoiceViaWhatsApp(options: {
       errorCode: "not_configured",
       errorMessage: "Cloud API not configured",
       userMessage:
-        "Official WhatsApp sending is not connected. Use Open WhatsApp instead.",
+        "Official WhatsApp sending is not connected yet. Use Open WhatsApp instead.",
       deeplinkUrl,
     };
   }
@@ -48,7 +48,7 @@ export async function sendInvoiceViaWhatsApp(options: {
   return client.sendInvoice(input);
 }
 
-export function getWhatsAppAvailability(config: WhatsAppTenantConfig): {
+export function getWhatsAppAvailability(config: WhatsAppCloudConfig): {
   cloudApiReady: boolean;
   canOpenDeeplink: boolean;
 } {
