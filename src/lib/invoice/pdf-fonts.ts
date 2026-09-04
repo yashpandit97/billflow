@@ -1,17 +1,18 @@
 import "server-only";
 
-import { Font } from "@react-pdf/renderer";
-
-const FONT_FAMILY = "InvoiceSans";
-
 const CDN_REGULAR =
   "https://cdn.jsdelivr.net/gh/googlefonts/roboto@main/src/hinted/Roboto-Regular.ttf";
 const CDN_BOLD =
   "https://cdn.jsdelivr.net/gh/googlefonts/roboto@main/src/hinted/Roboto-Bold.ttf";
 
-let registerPromise: Promise<void> | null = null;
+export type InvoiceFontBytes = {
+  regular: Uint8Array;
+  bold: Uint8Array;
+};
 
-async function fetchAsFontDataUri(url: string): Promise<string> {
+let fontsPromise: Promise<InvoiceFontBytes> | null = null;
+
+async function fetchFontBytes(url: string): Promise<Uint8Array> {
   const res = await fetch(url, {
     signal: AbortSignal.timeout(15000),
     cache: "force-cache",
@@ -19,18 +20,18 @@ async function fetchAsFontDataUri(url: string): Promise<string> {
   if (!res.ok) {
     throw new Error(`Font fetch failed (${res.status}): ${url}`);
   }
-  const buf = Buffer.from(await res.arrayBuffer());
+  const buf = new Uint8Array(await res.arrayBuffer());
   if (!buf.length) throw new Error(`Empty font: ${url}`);
-  return `data:font/ttf;base64,${buf.toString("base64")}`;
+  return buf;
 }
 
-async function localFontDataUri(filename: string): Promise<string | null> {
+async function localFontBytes(filename: string): Promise<Uint8Array | null> {
   try {
     const { readFile } = await import("node:fs/promises");
     const { join } = await import("node:path");
     const buf = await readFile(join(process.cwd(), "public/fonts", filename));
     if (!buf.length) return null;
-    return `data:font/ttf;base64,${buf.toString("base64")}`;
+    return new Uint8Array(buf);
   } catch {
     return null;
   }
@@ -46,20 +47,15 @@ function siteFontUrl(filename: string): string | null {
   return `${base}/fonts/${filename}`;
 }
 
-/**
- * Register TTF fonts for invoice body text.
- * pdfkit's Helvetica still loads via FontStore (patched for Workers);
- * InvoiceSans is the document face.
- */
-export async function ensureInvoiceFonts(): Promise<void> {
-  if (!registerPromise) {
-    registerPromise = (async () => {
-      let regularUri =
-        (await localFontDataUri("InvoiceSans-Regular.ttf")) ?? null;
-      let boldUri = (await localFontDataUri("InvoiceSans-Bold.ttf")) ?? null;
+/** Load Roboto TTF bytes for pdf-lib (Workers-safe; no Yoga / react-pdf). */
+export async function loadInvoiceFontBytes(): Promise<InvoiceFontBytes> {
+  if (!fontsPromise) {
+    fontsPromise = (async () => {
+      let regular = await localFontBytes("InvoiceSans-Regular.ttf");
+      let bold = await localFontBytes("InvoiceSans-Bold.ttf");
       let lastError: unknown;
 
-      if (!regularUri || !boldUri) {
+      if (!regular || !bold) {
         const regularCandidates = [
           siteFontUrl("InvoiceSans-Regular.ttf"),
           CDN_REGULAR,
@@ -69,26 +65,30 @@ export async function ensureInvoiceFonts(): Promise<void> {
           CDN_BOLD,
         ].filter(Boolean) as string[];
 
-        for (const url of regularCandidates) {
-          try {
-            regularUri = await fetchAsFontDataUri(url);
-            break;
-          } catch (err) {
-            lastError = err;
+        if (!regular) {
+          for (const url of regularCandidates) {
+            try {
+              regular = await fetchFontBytes(url);
+              break;
+            } catch (err) {
+              lastError = err;
+            }
           }
         }
-        for (const url of boldCandidates) {
-          try {
-            boldUri = await fetchAsFontDataUri(url);
-            break;
-          } catch (err) {
-            lastError = err;
+        if (!bold) {
+          for (const url of boldCandidates) {
+            try {
+              bold = await fetchFontBytes(url);
+              break;
+            } catch (err) {
+              lastError = err;
+            }
           }
         }
       }
 
-      if (!regularUri || !boldUri) {
-        registerPromise = null;
+      if (!regular || !bold) {
+        fontsPromise = null;
         throw new Error(
           `Could not load invoice fonts: ${
             lastError instanceof Error ? lastError.message : "unknown"
@@ -96,24 +96,12 @@ export async function ensureInvoiceFonts(): Promise<void> {
         );
       }
 
-      Font.register({
-        family: FONT_FAMILY,
-        fonts: [
-          { src: regularUri, fontWeight: 400 },
-          { src: boldUri, fontWeight: 700 },
-        ],
-      });
+      return { regular, bold };
     })().catch((err) => {
-      registerPromise = null;
+      fontsPromise = null;
       throw err;
     });
   }
 
-  await registerPromise;
+  return fontsPromise;
 }
-
-export const invoiceFont = {
-  family: FONT_FAMILY,
-  regular: { fontFamily: FONT_FAMILY, fontWeight: 400 as const },
-  bold: { fontFamily: FONT_FAMILY, fontWeight: 700 as const },
-};

@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  downloadInvoicePdfAction,
-  sendInvoiceWhatsAppAction,
-} from "@/app/actions/whatsapp";
+import { sendInvoiceEmailAction } from "@/app/actions/email";
+import { downloadInvoicePdfAction } from "@/app/actions/whatsapp";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buildInvoiceShareText } from "@/lib/invoice/share-message";
-import { Copy, MessageCircle, Share2 } from "lucide-react";
+import { Copy, Mail, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -117,14 +115,13 @@ export function ShareInvoiceButton({
 
   function sendBillToCustomer() {
     startTransition(async () => {
-      const res = await sendInvoiceWhatsAppAction(billId);
+      const res = await sendInvoiceEmailAction(billId);
       if (res.error) {
         toast.error(res.error);
         router.refresh();
         return;
       }
-      toast.success(res.success ?? "Invoice sent to customer on WhatsApp");
-      if (res.warning) toast.message(res.warning);
+      toast.success(res.success ?? "Invoice emailed to customer");
       setFallbackOpen(false);
       router.refresh();
     });
@@ -149,8 +146,8 @@ export function ShareInvoiceButton({
             <DialogTitle>Share invoice</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Send the invoice to the customer’s WhatsApp number, or download the
-            PDF and share it yourself.
+            Email the invoice PDF to the customer, or download it and share it
+            yourself.
           </p>
           <textarea
             readOnly
@@ -159,7 +156,7 @@ export function ShareInvoiceButton({
           />
           <div className="grid gap-2">
             <Button onClick={sendBillToCustomer} disabled={pending}>
-              <MessageCircle className="size-4" />
+              <Mail className="size-4" />
               {pending ? "Sending…" : "Send bill to customer"}
             </Button>
             <Button variant="outline" onClick={downloadPdf} disabled={pending}>
