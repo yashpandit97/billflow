@@ -110,26 +110,28 @@ Then visit `/admin`.
 
 Do this:
 
-1. **Workers → billmoney → Settings → Variables and Secrets** (runtime — auth/server):
+1. **Workers → billflow → Settings → Variables and Secrets** (runtime — auth/server):
 
 | Name | Example |
 |------|---------|
 | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `SUPABASE_ANON_KEY` | anon / publishable key |
 | `SUPABASE_SERVICE_ROLE_KEY` | service_role (encrypt) |
-| `SITE_URL` | `https://billmoney.yashpandit343.workers.dev` |
+| `SITE_URL` | `https://billflow.yashpandit343.workers.dev` |
 | `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | Same random string as Meta Verify token |
 | `WHATSAPP_APP_SECRET` | Meta App Secret (optional HMAC for POST) |
 | `WHATSAPP_PHONE_NUMBER_ID` | Platform sender phone number ID (optional env override) |
 | `WHATSAPP_ACCESS_TOKEN` | Platform sender access token (optional env override) |
 
-2. **Workers → billmoney → Settings → Build → Build variables and secrets** (so the client bundle gets real values):
+2. **Workers → billflow → Settings → Build → Build variables and secrets** (so the client bundle gets real values):
 
 | Name | Same value as |
 |------|----------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | `SUPABASE_URL` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `SUPABASE_ANON_KEY` |
 | `NEXT_PUBLIC_SITE_URL` | `SITE_URL` |
+
+> Cloudflare Worker script name is still **`billflow`** (CI-connected). Product branding is BillMoney. Keep `wrangler.jsonc` `name` / `WORKER_SELF_REFERENCE` as `billflow` until you rename the Worker in the Cloudflare dashboard.
 
 3. Trigger a **new deploy** after saving.
 

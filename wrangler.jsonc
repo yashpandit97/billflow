@@ -1,7 +1,10 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "billmoney",
+	// Must match the Cloudflare Workers Builds project name (currently "billflow").
+	// Product brand is BillMoney; rename the Worker in the Cloudflare dashboard
+	// before changing these values to "billmoney".
+	"name": "billflow",
 	"compatibility_date": "2026-08-31",
 	"compatibility_flags": [
 		"nodejs_compat",
@@ -16,7 +19,7 @@
 			// Self-reference service binding, the service name must match the worker name
 			// see https://opennext.js.org/cloudflare/caching
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "billmoney"
+			"service": "billflow"
 		}
 	],
 	"images": {
