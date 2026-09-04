@@ -2,6 +2,7 @@ import "server-only";
 
 import type { InvoiceData } from "@/lib/invoice/build-invoice-data";
 import { formatCurrency } from "@/lib/currency/format";
+import { ensureInvoiceFonts, invoiceFont } from "@/lib/invoice/pdf-fonts";
 import {
   Document,
   Image,
@@ -18,7 +19,7 @@ const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 10,
-    fontFamily: "Helvetica",
+    ...invoiceFont.regular,
     color: "#18181b",
   },
   header: {
@@ -36,19 +37,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingTop: 14,
     fontSize: 16,
-    fontFamily: "Helvetica-Bold",
+    ...invoiceFont.bold,
   },
-  businessName: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 4 },
+  businessName: { fontSize: 16, ...invoiceFont.bold, marginBottom: 4 },
   muted: { color: "#71717a", marginBottom: 2 },
   invoiceMeta: { textAlign: "right" },
   invoiceLabel: {
     fontSize: 9,
     letterSpacing: 2,
     textTransform: "uppercase",
-    fontFamily: "Helvetica-Bold",
+    ...invoiceFont.bold,
     marginBottom: 4,
   },
-  invoiceNumber: { fontSize: 14, fontFamily: "Helvetica-Bold" },
+  invoiceNumber: { fontSize: 14, ...invoiceFont.bold },
   section: { marginTop: 20 },
   sectionLabel: {
     fontSize: 8,
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     paddingBottom: 6,
     marginBottom: 4,
-    fontFamily: "Helvetica-Bold",
+    ...invoiceFont.bold,
   },
   row: {
     flexDirection: "row",
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     marginTop: 4,
     fontSize: 12,
-    fontFamily: "Helvetica-Bold",
+    ...invoiceFont.bold,
   },
   qrBox: {
     marginTop: 20,
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
     borderColor: "#d4d4d8",
   },
   qr: { width: 120, height: 120, marginTop: 8 },
-  footer: { marginTop: 24, fontFamily: "Helvetica-Bold" },
+  footer: { marginTop: 24, ...invoiceFont.bold },
 });
 
 async function toDataUri(url: string | null | undefined): Promise<string | null> {
@@ -186,7 +187,7 @@ function InvoicePdfDocument({ data }: { data: InvoiceData }) {
         {data.customer.name ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Bill to</Text>
-            <Text style={{ fontFamily: "Helvetica-Bold" }}>
+            <Text style={{ ...invoiceFont.bold }}>
               {data.customer.name}
             </Text>
             {data.customer.phone ? (
@@ -255,7 +256,7 @@ function InvoicePdfDocument({ data }: { data: InvoiceData }) {
 
         {data.upi.showQr && data.upi.qrUrl ? (
           <View style={styles.qrBox}>
-            <Text style={{ fontFamily: "Helvetica-Bold", letterSpacing: 1 }}>
+            <Text style={{ ...invoiceFont.bold, letterSpacing: 1 }}>
               SCAN TO PAY
             </Text>
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
@@ -317,6 +318,7 @@ async function renderPdfBytes(
 export async function generateInvoicePdf(
   data: InvoiceData
 ): Promise<Uint8Array> {
+  await ensureInvoiceFonts();
   const embedded = await withEmbeddedImages(data);
   return renderPdfBytes(
     <InvoicePdfDocument data={embedded} /> as React.ReactElement<

@@ -75,6 +75,16 @@ function mapGraphSendError(
         "This number is not allowed yet. Add it as a test recipient in Meta (unpublished apps) or publish the app.",
     };
   }
+  if (
+    graphCode === 133010 ||
+    message.includes("account not registered")
+  ) {
+    return {
+      errorCode: "sender_not_registered",
+      userMessage:
+        "Your WhatsApp business number is not registered for Cloud API yet. In Meta, register the phone (POST /{phone-number-id}/register with a 6-digit PIN), then try again.",
+    };
+  }
 
   return {
     errorCode: "api_error",
