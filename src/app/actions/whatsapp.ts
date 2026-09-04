@@ -383,7 +383,10 @@ export async function downloadInvoicePdfAction(
       filename: invoicePdfFilename(invoiceData),
     };
   } catch (err) {
-    console.error(err);
-    return { error: "Could not generate PDF" };
+    console.error("invoice pdf generation failed", err);
+    const detail = err instanceof Error ? err.message : "unknown error";
+    return {
+      error: `Could not generate PDF (${detail.slice(0, 120)})`,
+    };
   }
 }

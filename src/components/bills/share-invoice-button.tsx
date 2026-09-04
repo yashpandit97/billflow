@@ -1,6 +1,9 @@
 "use client";
 
-import { downloadInvoicePdfAction } from "@/app/actions/whatsapp";
+import {
+  downloadInvoicePdfAction,
+  sendInvoiceWhatsAppAction,
+} from "@/app/actions/whatsapp";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,7 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buildInvoiceShareText } from "@/lib/invoice/share-message";
-import { Copy, Share2 } from "lucide-react";
+import { Copy, MessageCircle, Share2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -43,6 +47,7 @@ export function ShareInvoiceButton({
   className?: string;
   size?: "default" | "lg";
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [fallbackOpen, setFallbackOpen] = useState(false);
   const [fallbackMessage, setFallbackMessage] = useState("");
@@ -110,9 +115,19 @@ export function ShareInvoiceButton({
     });
   }
 
-  function openWhatsAppWeb() {
-    const text = encodeURIComponent(fallbackMessage);
-    window.open(`https://web.whatsapp.com/send?text=${text}`, "_blank");
+  function sendBillToCustomer() {
+    startTransition(async () => {
+      const res = await sendInvoiceWhatsAppAction(billId);
+      if (res.error) {
+        toast.error(res.error);
+        router.refresh();
+        return;
+      }
+      toast.success(res.success ?? "Invoice sent to customer on WhatsApp");
+      if (res.warning) toast.message(res.warning);
+      setFallbackOpen(false);
+      router.refresh();
+    });
   }
 
   return (
@@ -134,8 +149,8 @@ export function ShareInvoiceButton({
             <DialogTitle>Share invoice</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Your browser does not support direct file sharing. Download the PDF
-            and use one of the options below.
+            Send the invoice to the customer’s WhatsApp number, or download the
+            PDF and share it yourself.
           </p>
           <textarea
             readOnly
@@ -143,14 +158,16 @@ export function ShareInvoiceButton({
             value={fallbackMessage}
           />
           <div className="grid gap-2">
-            <Button onClick={downloadPdf} disabled={pending}>
-              Download PDF
+            <Button onClick={sendBillToCustomer} disabled={pending}>
+              <MessageCircle className="size-4" />
+              {pending ? "Sending…" : "Send bill to customer"}
             </Button>
-            <Button variant="outline" onClick={openWhatsAppWeb}>
-              Open WhatsApp Web
+            <Button variant="outline" onClick={downloadPdf} disabled={pending}>
+              Download PDF
             </Button>
             <Button
               variant="outline"
+              disabled={pending}
               onClick={() => {
                 void navigator.clipboard.writeText(fallbackMessage);
                 toast.success("Message copied");
