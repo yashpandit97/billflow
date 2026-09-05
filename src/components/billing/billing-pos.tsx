@@ -156,6 +156,7 @@ export function BillingPos({
     invoiceNumber: string;
     total: number;
     customerName?: string | null;
+    customerEmail?: string | null;
     paymentMethod?: string | null;
   } | null>(null);
   const [newTabOpen, setNewTabOpen] = useState(false);
@@ -486,6 +487,7 @@ export function BillingPos({
             invoiceNumber: result.invoiceNumber || "Invoice",
             total: result.total ?? calc.total,
             customerName: localCustomers.find((c) => c.id === customerId)?.name,
+            customerEmail: localCustomers.find((c) => c.id === customerId)?.email,
             paymentMethod,
           });
           router.refresh();
@@ -532,6 +534,7 @@ export function BillingPos({
           invoiceNumber: result.invoiceNumber || "Invoice",
           total: result.total ?? calc.total,
           customerName: localCustomers.find((c) => c.id === customerId)?.name,
+          customerEmail: localCustomers.find((c) => c.id === customerId)?.email,
           paymentMethod,
         });
         router.refresh();
@@ -1041,6 +1044,7 @@ export function BillingPos({
           locale={locale}
           businessName={businessName}
           customerName={successBill.customerName}
+          customerEmail={successBill.customerEmail}
           paymentMethod={successBill.paymentMethod}
         />
       ) : null}

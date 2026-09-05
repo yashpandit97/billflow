@@ -103,4 +103,64 @@ describe("generateInvoicePdf", () => {
     const doc = await PDFDocument.load(bytes);
     expect(doc.getPage(0).getWidth()).toBeCloseTo(226.77, 0);
   });
+
+  it("renders a short cafe invoice (INV-000001 layout)", async () => {
+    const cafe: InvoiceData = {
+      ...sample,
+      business: {
+        ...sample.business,
+        name: "Yash's cafe",
+        address: null,
+        phone: null,
+        email: null,
+        taxId: null,
+        primaryColor: "#18181b",
+      },
+      invoiceNumber: "INV-000001",
+      customer: {
+        id: "c1",
+        name: "Nidhi",
+        phone: "+918867642126",
+        email: null,
+        address: "#25 Hanumanavar Galli Angol",
+        taxId: null,
+      },
+      lines: [
+        {
+          id: "1",
+          name: "tea",
+          sku: null,
+          quantity: 1,
+          unitPrice: 2000,
+          lineTotal: 2000,
+          discount: 0,
+        },
+        {
+          id: "2",
+          name: "coffee",
+          sku: null,
+          quantity: 1,
+          unitPrice: 2500,
+          lineTotal: 2500,
+          discount: 0,
+        },
+      ],
+      subtotal: 4500,
+      discount: 0,
+      tax: 0,
+      total: 4500,
+      paymentMethod: "upi",
+      paymentStatus: "paid",
+      formatted: {
+        subtotal: "₹45.00",
+        discount: "₹0.00",
+        tax: "₹0.00",
+        total: "₹45.00",
+      },
+    };
+    const bytes = await generateInvoicePdf(cafe);
+    const doc = await PDFDocument.load(bytes);
+    expect(bytes.byteLength).toBeGreaterThan(1000);
+    expect(doc.getPageCount()).toBe(1);
+  });
 });

@@ -19,7 +19,7 @@ export default function AboutPage() {
           </p>
           <p>
             Our focus is simple: fast billing, branded invoices, UPI QR on invoices,
-            WhatsApp sharing, and clear reports — all for a flat monthly price with no
+            email invoices, and clear reports — all for a flat monthly price with no
             transaction fees.
           </p>
           <p>

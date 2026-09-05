@@ -20,6 +20,7 @@ import { revalidatePath } from "next/cache";
 export type SendInvoiceEmailResult = {
   error?: string;
   success?: string;
+  code?: "missing_customer_email";
 };
 
 function escapeHtml(value: string): string {
@@ -97,8 +98,9 @@ export async function sendInvoiceEmailAction(
   const to = customer?.email?.trim() ?? "";
   if (!to || !to.includes("@")) {
     return {
+      code: "missing_customer_email",
       error:
-        "Customer email is required to send this invoice. Add an email on the customer, then try again.",
+        "Customer email is required to send this invoice. Add an email, then send again.",
     };
   }
 

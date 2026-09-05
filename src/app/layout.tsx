@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s · BillMoney",
   },
   description:
-    "Simple billing and invoicing for Indian small businesses. Create bills, share on WhatsApp, accept UPI payments. ₹999/month. No transaction fees.",
+    "Simple billing and invoicing for Indian small businesses. Create bills, email invoices, accept UPI payments. ₹999/month. No transaction fees.",
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
     apple: [{ url: "/logo.png", type: "image/png" }],

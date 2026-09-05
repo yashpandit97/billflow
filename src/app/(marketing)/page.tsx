@@ -7,7 +7,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Simple Billing Software for Small Business in India",
-  description: `Create bills, professional invoices, UPI QR payments, and WhatsApp sharing for Indian small businesses. ${LANDING_TRIAL_DAYS}-day free trial, then ${LANDING_PRICE}/month. No transaction fees.`,
+  description: `Create bills, professional invoices, UPI QR payments, and email invoices for Indian small businesses. ${LANDING_TRIAL_DAYS}-day free trial, then ${LANDING_PRICE}/month. No transaction fees.`,
   openGraph: {
     title: "BillMoney — Simple billing for your business",
     description: `Billing and invoicing for Indian SMBs. ${LANDING_TRIAL_DAYS}-day free trial. ${LANDING_PRICE}/month. No transaction fees.`,
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     "mobile billing software",
     "small business invoice software",
     "UPI invoice software",
-    "WhatsApp invoice software",
+    "email invoice software",
   ],
 };
 

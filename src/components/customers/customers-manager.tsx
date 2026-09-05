@@ -18,38 +18,47 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Customer } from "@/types/database";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const initial: CustomerActionResult = {};
 
 function CustomerForm({
   customer,
+  billId,
+  requireEmail = false,
+  submitLabel,
   onDone,
 }: {
   customer?: Customer;
+  billId?: string;
+  requireEmail?: boolean;
+  submitLabel?: string;
   onDone?: (id?: string) => void;
 }) {
   const [state, formAction] = useActionState(upsertCustomerAction, initial);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     if (state.success) {
       toast.success(state.success);
-      onDone?.(state.customerId);
+      onDoneRef.current?.(state.customerId);
     }
     if (state.error) toast.error(state.error);
-  }, [state, onDone]);
+  }, [state.error, state.success, state.customerId]);
 
   return (
     <form action={formAction} className="space-y-4">
       {customer ? <input type="hidden" name="id" value={customer.id} /> : null}
+      {billId ? <input type="hidden" name="billId" value={billId} /> : null}
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
         <Input id="name" name="name" defaultValue={customer?.name} required />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="phone">WhatsApp / Phone</Label>
+          <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"
             name="phone"
@@ -57,9 +66,6 @@ function CustomerForm({
             placeholder="+91XXXXXXXXXX"
             defaultValue={customer?.phone ?? ""}
           />
-          <p className="text-xs text-muted-foreground">
-            Use international format when possible (e.g. +91…).
-          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -68,7 +74,13 @@ function CustomerForm({
             name="email"
             type="email"
             defaultValue={customer?.email ?? ""}
+            required={requireEmail}
           />
+          {requireEmail ? (
+            <p className="text-xs text-muted-foreground">
+              Required to email this invoice.
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="space-y-2">
@@ -85,7 +97,7 @@ function CustomerForm({
         <Input id="tax_id" name="tax_id" defaultValue={customer?.tax_id ?? ""} />
       </div>
       <SubmitButton className="w-full">
-        {customer ? "Save changes" : "Add customer"}
+        {submitLabel ?? (customer ? "Save changes" : "Add customer")}
       </SubmitButton>
     </form>
   );

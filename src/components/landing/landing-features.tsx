@@ -4,7 +4,7 @@ import {
   Package,
   Receipt,
   QrCode,
-  MessageCircle,
+  Mail,
   Smartphone,
   Zap,
 } from "lucide-react";
@@ -164,13 +164,13 @@ function UpiVisual() {
   );
 }
 
-function WhatsAppVisual() {
+function EmailVisual() {
   const steps = [
     "Create bill",
     "Generate invoice",
-    "Tap Share",
-    "Choose WhatsApp",
-    "Review & Send",
+    "Tap Send bill",
+    "Add customer email if needed",
+    "Email the PDF",
   ];
   return (
     <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-stretch">
@@ -185,9 +185,9 @@ function WhatsAppVisual() {
         ))}
       </ol>
       <div className="w-full max-w-[140px] rounded-2xl border border-border bg-[#0a1014] p-3 sm:w-auto">
-        <div className="mb-2 flex items-center gap-2 text-[10px] text-[#25D366]">
-          <MessageCircle className="size-3.5" />
-          WhatsApp
+        <div className="mb-2 flex items-center gap-2 text-[10px] text-primary">
+          <Mail className="size-3.5" />
+          Email
         </div>
         <div className="space-y-1.5">
           <div className="rounded-lg rounded-tl-none bg-[#1f2c34] px-2 py-1.5 text-[9px]">
@@ -197,7 +197,7 @@ function WhatsAppVisual() {
             PDF attached
           </div>
         </div>
-        <p className="mt-2 text-[8px] text-muted-foreground">You tap Send</p>
+        <p className="mt-2 text-[8px] text-muted-foreground">Sent to customer</p>
       </div>
     </div>
   );
@@ -359,17 +359,17 @@ export function LandingFeatures() {
         />
 
         <FeatureBlock
-          eyebrow="WhatsApp"
-          title="Send the bill on WhatsApp."
-          description="After creating an invoice, tap Share, choose WhatsApp, and send the PDF with a ready-made message. You review and tap Send — nothing goes out automatically."
+          eyebrow="Email invoices"
+          title="Send the bill by email."
+          description="After creating an invoice, tap Send bill to customer. If you haven’t captured their details yet, add a name and email, then send the PDF."
           bullets={[
-            "Share PDF and message from your phone",
-            "Works with native share on supported devices",
-            "Fallback to download or WhatsApp Web",
-            "You stay in control of every message",
+            "Email the invoice PDF to your customer",
+            "Add customer details at send time if needed",
+            "Download or print as a fallback",
+            "You stay in control of every send",
           ]}
-          icon={MessageCircle}
-          visual={<WhatsAppVisual />}
+          icon={Mail}
+          visual={<EmailVisual />}
           reverse
         />
 

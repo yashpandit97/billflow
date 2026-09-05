@@ -21,7 +21,7 @@ export const LANDING_TRUST_ITEMS = [
   "No transaction fees",
   "Mobile friendly",
   "UPI ready",
-  "WhatsApp sharing",
+  "Email invoices",
 ] as const;
 
 export const LANDING_PRICING_FEATURES = [
@@ -29,7 +29,7 @@ export const LANDING_PRICING_FEATURES = [
   "Product management",
   "Professional invoices",
   "UPI QR invoices",
-  "WhatsApp sharing",
+  "Email invoices",
   "Reports",
   "Business branding",
   "Mobile access",
@@ -61,9 +61,9 @@ export const LANDING_FAQ = [
       "No. You can download, print, or share invoices digitally from your device.",
   },
   {
-    question: "Can I send invoices through WhatsApp?",
+    question: "Can I email invoices to customers?",
     answer:
-      "Yes. Generate the invoice, tap Share, choose WhatsApp, and send the PDF and message yourself.",
+      "Yes. After you create an invoice, tap Send bill to customer and email the PDF. If the customer isn’t on the bill yet, add their details first.",
   },
   {
     question: "Can I add my own UPI QR code?",
@@ -85,7 +85,7 @@ export const LANDING_FAQ = [
 export const LANDING_COMPARE_ROWS = [
   { feature: "Mobile-first billing", us: true, them: "Often limited" },
   { feature: "Simple billing workflow", us: true, them: true },
-  { feature: "WhatsApp invoice sharing", us: true, them: "Varies" },
+  { feature: "Email invoices", us: true, them: "Varies" },
   { feature: "UPI QR on invoices", us: true, them: "Varies" },
   { feature: "Simple flat pricing", us: true, them: "Often complicated" },
   { feature: "No transaction fees", us: true, them: "Varies" },

@@ -20,7 +20,9 @@ export async function upsertCustomerAction(
   const gate = await assertTenantCanUseApp(supabase, tenantId);
   if (!gate.ok) return { error: gate.error };
 
-  const id = formData.get("id") as string | null;
+  const billId = (formData.get("billId") as string | null)?.trim() || "";
+  let id = (formData.get("id") as string | null)?.trim() || "";
+
   const parsed = customerSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone") || "",
@@ -31,6 +33,24 @@ export async function upsertCustomerAction(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  if (billId && !parsed.data.email) {
+    return { error: "Email is required to send this invoice." };
+  }
+
+  if (billId) {
+    const { data: bill } = await supabase
+      .from("bills")
+      .select("id, customer_id, status")
+      .eq("id", billId)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    if (!bill) return { error: "Invoice not found" };
+    if (bill.status === "cancelled") {
+      return { error: "Cannot update a cancelled invoice" };
+    }
+    if (!id && bill.customer_id) id = bill.customer_id;
   }
 
   let phone: string | null = parsed.data.phone || null;
@@ -49,6 +69,8 @@ export async function upsertCustomerAction(
     tax_id: parsed.data.tax_id || null,
   };
 
+  let customerId = id || "";
+
   if (id) {
     const { error } = await supabase
       .from("customers")
@@ -56,22 +78,34 @@ export async function upsertCustomerAction(
       .eq("id", id)
       .eq("tenant_id", tenantId);
     if (error) return { error: error.message };
-    revalidatePath("/customers");
-    revalidatePath(`/customers/${id}`);
-    revalidatePath("/billing");
-    return { success: "Customer updated", customerId: id };
+  } else {
+    const { data, error } = await supabase
+      .from("customers")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) return { error: error.message };
+    customerId = data.id;
   }
 
-  const { data, error } = await supabase
-    .from("customers")
-    .insert(payload)
-    .select("id")
-    .single();
+  if (billId) {
+    const { error: billError } = await supabase
+      .from("bills")
+      .update({ customer_id: customerId })
+      .eq("id", billId)
+      .eq("tenant_id", tenantId);
+    if (billError) return { error: billError.message };
+    revalidatePath(`/bills/${billId}`);
+  }
 
-  if (error) return { error: error.message };
   revalidatePath("/customers");
+  if (customerId) revalidatePath(`/customers/${customerId}`);
   revalidatePath("/billing");
-  return { success: "Customer created", customerId: data.id };
+  return {
+    success: id ? "Customer updated" : "Customer created",
+    customerId,
+  };
 }
 
 export async function deleteCustomerAction(customerId: string) {

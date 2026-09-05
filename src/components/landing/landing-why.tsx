@@ -32,7 +32,7 @@ const reasons = [
     icon: MessageCircle,
     title: "Connected",
     description:
-      "Share invoices through WhatsApp and support UPI payments with your own QR.",
+      "Share invoices by email and support UPI payments with your own QR.",
   },
   {
     icon: IndianRupee,

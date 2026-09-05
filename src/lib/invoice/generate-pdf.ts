@@ -7,7 +7,6 @@ import {
   formatPaymentMethod,
   formatPaymentStatus,
   wrapTextToLines,
-  wrappedTextHeight,
 } from "@/lib/invoice/pdf-text";
 import {
   PDFDocument,
@@ -108,6 +107,22 @@ async function embedImage(
   return null;
 }
 
+function ascentOf(font: PDFFont, size: number): number {
+  const h = font.heightAtSize(size, { descender: false });
+  return Number.isFinite(h) && h > 0 ? h : size * 0.8;
+}
+
+function descentOf(font: PDFFont, size: number): number {
+  const full = font.heightAtSize(size);
+  const ascent = ascentOf(font, size);
+  const d = (Number.isFinite(full) && full > 0 ? full : size) - ascent;
+  return d > 0 ? d : size * 0.2;
+}
+
+function glyphHeight(font: PDFFont, size: number): number {
+  return ascentOf(font, size) + descentOf(font, size);
+}
+
 type DrawOpts = {
   font: PDFFont;
   size?: number;
@@ -117,25 +132,32 @@ type DrawOpts = {
   align?: "left" | "right" | "center";
 };
 
-/** Draw text with wrapping; returns height consumed (baseline of first line to past last line). */
-function drawWrappedText(
+/**
+ * `topY` is the top of the first line's glyph box (not the PDF baseline).
+ * Returns the y just below the last line's descenders.
+ */
+function paintText(
   page: PDFPage,
   text: string,
   x: number,
-  y: number,
+  topY: number,
   opts: DrawOpts
 ): number {
   const size = opts.size ?? 10;
   const color = opts.color ?? COLOR.text;
-  const factor = opts.lineHeightFactor ?? 1.3;
-  const lineHeight = size * factor;
+  const factor = opts.lineHeightFactor ?? 1.35;
+  const ascent = ascentOf(opts.font, size);
+  const descent = descentOf(opts.font, size);
+  const lineStep = Math.max(size * factor, ascent + descent + 1);
   const maxWidth = opts.maxWidth;
   const lines = maxWidth
     ? wrapTextToLines(text, opts.font, size, maxWidth)
     : [(text || "").replace(/\r\n/g, "\n")];
 
-  let cursorY = y;
-  for (const line of lines) {
+  let top = topY;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const baseline = top - ascent;
     let drawX = x;
     if (opts.align === "right" && maxWidth) {
       drawX = x + maxWidth - opts.font.widthOfTextAtSize(line, size);
@@ -145,33 +167,40 @@ function drawWrappedText(
     if (line) {
       page.drawText(line, {
         x: drawX,
-        y: cursorY,
+        y: baseline,
         size,
         font: opts.font,
         color,
       });
     }
-    cursorY -= lineHeight;
+    if (i < lines.length - 1) {
+      top -= lineStep;
+    } else {
+      top = baseline - descent;
+    }
   }
-  return lines.length * lineHeight;
+  return top;
 }
 
-function rightText(
+function paintRight(
   page: PDFPage,
   text: string,
   rightX: number,
-  y: number,
+  topY: number,
   opts: { font: PDFFont; size?: number; color?: RGB }
-): void {
+): number {
   const size = opts.size ?? 10;
+  const ascent = ascentOf(opts.font, size);
+  const baseline = topY - ascent;
   const width = opts.font.widthOfTextAtSize(text, size);
   page.drawText(text, {
     x: rightX - width,
-    y,
+    y: baseline,
     size,
     font: opts.font,
     color: opts.color ?? COLOR.text,
   });
+  return baseline - descentOf(opts.font, size);
 }
 
 type Layout = {
@@ -252,7 +281,7 @@ export async function generateInvoicePdf(
     }
   };
 
-  // Header
+  // Header — y is the top of remaining content (not a text baseline)
   const headerTop = y;
   let logoDrawW = logoBox;
   let logoDrawH = logoBox;
@@ -275,90 +304,84 @@ export async function generateInvoicePdf(
       color: brand,
     });
     const initial = data.business.name.slice(0, 1).toUpperCase() || "B";
-    const iw = bold.widthOfTextAtSize(initial, isThermal ? 14 : 18);
+    const initialSize = isThermal ? 14 : 18;
+    const iw = bold.widthOfTextAtSize(initial, initialSize);
+    const ia = ascentOf(bold, initialSize);
+    const id = descentOf(bold, initialSize);
     page.drawText(initial, {
       x: margin + (logoBox - iw) / 2,
-      y: headerTop - logoBox / 2 - (isThermal ? 5 : 6),
-      size: isThermal ? 14 : 18,
+      y: headerTop - logoBox + (logoBox - (ia + id)) / 2 + id,
+      size: initialSize,
       font: bold,
       color: COLOR.white,
     });
   }
 
   const textX = isThermal ? margin : margin + logoBox + 12;
-  const metaWidth = isThermal
-    ? contentWidth
-    : contentWidth * 0.38;
+  const metaWidth = isThermal ? contentWidth : contentWidth * 0.38;
   const brandMaxWidth = isThermal
     ? contentWidth
     : contentWidth - logoBox - 12 - metaWidth - 8;
 
-  let brandY = headerTop - (isThermal ? logoDrawH + 10 : 16);
-  if (!isThermal) {
-    brandY = headerTop - 14;
-  }
+  let brandY = isThermal ? headerTop - logoDrawH - 10 : headerTop;
 
-  brandY -= drawWrappedText(page, data.business.name, textX, brandY, {
+  brandY = paintText(page, data.business.name, textX, brandY, {
     font: bold,
     size: isThermal ? 12 : 16,
     maxWidth: brandMaxWidth,
   });
-  brandY += 2; // slight tighten after name
+  brandY -= 4;
 
   if (data.business.address) {
-    brandY -= drawWrappedText(page, data.business.address, textX, brandY, {
+    brandY = paintText(page, data.business.address, textX, brandY, {
       font: regular,
       size: 9,
       color: COLOR.muted,
       maxWidth: brandMaxWidth,
       lineHeightFactor: 1.25,
     });
+    brandY -= 2;
   }
   const contact = [data.business.phone, data.business.email]
     .filter(Boolean)
     .join(" · ");
   if (contact) {
-    brandY -= drawWrappedText(page, contact, textX, brandY, {
+    brandY = paintText(page, contact, textX, brandY, {
+      font: regular,
+      size: 9,
+      color: COLOR.muted,
+      maxWidth: brandMaxWidth,
+    });
+    brandY -= 2;
+  }
+  if (data.business.taxId) {
+    brandY = paintText(page, `GSTIN: ${data.business.taxId}`, textX, brandY, {
       font: regular,
       size: 9,
       color: COLOR.muted,
       maxWidth: brandMaxWidth,
     });
   }
-  if (data.business.taxId) {
-    brandY -= drawWrappedText(
-      page,
-      `GSTIN: ${data.business.taxId}`,
-      textX,
-      brandY,
-      {
-        font: regular,
-        size: 9,
-        color: COLOR.muted,
-        maxWidth: brandMaxWidth,
-      }
-    );
-  }
 
   // Invoice meta (right on A4, below brand on thermal)
   if (isThermal) {
-    y = brandY - 8;
-    drawWrappedText(page, "INVOICE", margin, y, {
+    y = brandY - 12;
+    y = paintText(page, "INVOICE", margin, y, {
       font: bold,
       size: 8,
       color: brand,
       maxWidth: contentWidth,
       align: "center",
     });
-    y -= 12;
-    drawWrappedText(page, data.invoiceNumber, margin, y, {
+    y -= 6;
+    y = paintText(page, data.invoiceNumber, margin, y, {
       font: bold,
       size: 12,
       maxWidth: contentWidth,
       align: "center",
     });
-    y -= 14;
-    drawWrappedText(page, data.invoiceDate, margin, y, {
+    y -= 4;
+    y = paintText(page, data.invoiceDate, margin, y, {
       font: regular,
       size: 9,
       color: COLOR.muted,
@@ -367,139 +390,146 @@ export async function generateInvoicePdf(
     });
     y -= 18;
   } else {
-    const metaX = pageWidth - margin - metaWidth;
-    rightText(page, "INVOICE", pageWidth - margin, headerTop - 12, {
+    let metaY = headerTop;
+    metaY = paintRight(page, "INVOICE", pageWidth - margin, metaY, {
       font: bold,
       size: 9,
       color: brand,
     });
-    rightText(page, data.invoiceNumber, pageWidth - margin, headerTop - 28, {
+    metaY -= 6;
+    metaY = paintRight(page, data.invoiceNumber, pageWidth - margin, metaY, {
       font: bold,
       size: 14,
     });
-    rightText(page, data.invoiceDate, pageWidth - margin, headerTop - 44, {
+    metaY -= 4;
+    metaY = paintRight(page, data.invoiceDate, pageWidth - margin, metaY, {
       font: regular,
       size: 10,
       color: COLOR.muted,
     });
-    void metaX;
-    y = Math.min(brandY, headerTop - logoBox) - 20;
+    y = Math.min(brandY, metaY, headerTop - logoBox) - 28;
   }
 
   // Bill to
   if (data.customer.name) {
     ensureSpace(80);
-    y -= drawWrappedText(page, "BILL TO", margin, y, {
+    y = paintText(page, "BILL TO", margin, y, {
       font: regular,
       size: 8,
       color: COLOR.muted,
       maxWidth: contentWidth,
     });
-    y += 2;
-    y -= drawWrappedText(page, data.customer.name, margin, y, {
+    y -= 10;
+    y = paintText(page, data.customer.name, margin, y, {
       font: bold,
       size: 11,
       maxWidth: contentWidth * 0.7,
     });
+    y -= 3;
     if (data.customer.phone) {
-      y -= drawWrappedText(page, data.customer.phone, margin, y, {
+      y = paintText(page, data.customer.phone, margin, y, {
         font: regular,
         size: 9,
         color: COLOR.muted,
         maxWidth: contentWidth,
       });
+      y -= 2;
     }
     if (data.customer.address) {
-      y -= drawWrappedText(page, data.customer.address, margin, y, {
+      y = paintText(page, data.customer.address, margin, y, {
         font: regular,
         size: 9,
         color: COLOR.muted,
         maxWidth: contentWidth * 0.7,
         lineHeightFactor: 1.25,
       });
+      y -= 2;
     }
     if (data.customer.taxId) {
-      y -= drawWrappedText(
-        page,
-        `GSTIN: ${data.customer.taxId}`,
-        margin,
-        y,
-        {
-          font: regular,
-          size: 9,
-          color: COLOR.muted,
-          maxWidth: contentWidth,
-        }
-      );
+      y = paintText(page, `GSTIN: ${data.customer.taxId}`, margin, y, {
+        font: regular,
+        size: 9,
+        color: COLOR.muted,
+        maxWidth: contentWidth,
+      });
     }
-    y -= 10;
+    y -= 22;
   }
 
-  // Table
-  const colItem = margin;
-  const colQty = margin + contentWidth * (isThermal ? 0.5 : 0.52);
-  const colPrice = margin + contentWidth * (isThermal ? 0.68 : 0.68);
-  const colTotal = pageWidth - margin;
-  const itemMaxW = contentWidth * (isThermal ? 0.46 : 0.48);
+  // Table — right edges for numeric columns so headers and values share alignment
+  const qtyRight = margin + contentWidth * (isThermal ? 0.58 : 0.62);
+  const priceRight = margin + contentWidth * (isThermal ? 0.78 : 0.81);
+  const totalRight = pageWidth - margin;
+  const itemMaxW = qtyRight - margin - 12;
 
   ensureSpace(40);
+  const headerRowTop = y;
+  paintText(page, "Item", margin, headerRowTop, {
+    font: bold,
+    size: 9,
+  });
+  paintRight(page, "Qty", qtyRight, headerRowTop, { font: bold, size: 9 });
+  paintRight(page, "Price", priceRight, headerRowTop, { font: bold, size: 9 });
+  const headerBottom = paintRight(page, "Total", totalRight, headerRowTop, {
+    font: bold,
+    size: 9,
+  });
+  y = headerBottom - 6;
   page.drawLine({
-    start: { x: margin, y: y + 6 },
-    end: { x: pageWidth - margin, y: y + 6 },
+    start: { x: margin, y },
+    end: { x: pageWidth - margin, y },
     thickness: 1.5,
     color: brand,
   });
-  drawWrappedText(page, "Item", colItem, y, { font: bold, size: 9 });
-  rightText(page, "Qty", colQty + 28, y, { font: bold, size: 9 });
-  rightText(page, "Price", colPrice + 40, y, { font: bold, size: 9 });
-  rightText(page, "Total", colTotal, y, { font: bold, size: 9 });
-  y -= 16;
+  y -= 10;
 
   for (const line of data.lines) {
     const nameLines = wrapTextToLines(line.name, regular, 10, itemMaxW);
-    const nameH = wrappedTextHeight(nameLines.length, 10, 1.25);
-    const rowH = nameH + (line.sku ? 12 : 0) + 10;
+    const nameH =
+      nameLines.length * Math.max(10 * 1.25, glyphHeight(regular, 10));
+    const rowH = nameH + (line.sku ? glyphHeight(regular, 8) + 4 : 0) + 10;
     ensureSpace(rowH + 8);
 
     const rowTop = y;
-    drawWrappedText(page, line.name, colItem, y, {
+    const nameBottom = paintText(page, line.name, margin, rowTop, {
       font: regular,
       size: 10,
       maxWidth: itemMaxW,
       lineHeightFactor: 1.25,
     });
-    rightText(page, String(line.quantity), colQty + 28, rowTop, {
+    paintRight(page, String(line.quantity), qtyRight, rowTop, {
       font: regular,
       size: 10,
     });
-    rightText(
+    paintRight(
       page,
       formatCurrency(line.unitPrice, currencyOpts),
-      colPrice + 40,
+      priceRight,
       rowTop,
       { font: regular, size: 10 }
     );
-    rightText(
+    paintRight(
       page,
       formatCurrency(line.lineTotal, currencyOpts),
-      colTotal,
+      totalRight,
       rowTop,
       { font: regular, size: 10 }
     );
 
-    y = rowTop - nameH;
+    y = nameBottom;
     if (line.sku) {
-      y -= drawWrappedText(page, line.sku, colItem, y, {
+      y -= 2;
+      y = paintText(page, line.sku, margin, y, {
         font: regular,
         size: 8,
         color: COLOR.muted,
         maxWidth: itemMaxW,
       });
     }
-    y -= 4;
+    y -= 6;
     page.drawLine({
-      start: { x: margin, y: y + 2 },
-      end: { x: pageWidth - margin, y: y + 2 },
+      start: { x: margin, y },
+      end: { x: pageWidth - margin, y },
       thickness: 0.5,
       color: COLOR.line,
     });
@@ -508,51 +538,46 @@ export async function generateInvoicePdf(
 
   // Totals
   ensureSpace(90);
-  y -= 4;
+  y -= 8;
   const totalsWidth = isThermal ? contentWidth : 200;
   const totalsX = pageWidth - margin - totalsWidth;
-  const totalsRight = pageWidth - margin;
+  const totalsRightEdge = pageWidth - margin;
 
   const drawTotalRow = (
     label: string,
     value: string,
     strong = false
   ): void => {
-    page.drawText(label, {
-      x: totalsX,
-      y,
-      size: strong ? 12 : 10,
-      font: strong ? bold : regular,
-      color: strong ? COLOR.text : COLOR.muted,
-    });
-    rightText(page, value, totalsRight, y, {
-      font: strong ? bold : regular,
-      size: strong ? 12 : 10,
-      color: strong ? COLOR.text : COLOR.muted,
-    });
-    y -= strong ? 18 : 14;
+    const size = strong ? 12 : 10;
+    const font = strong ? bold : regular;
+    const color = strong ? COLOR.text : COLOR.muted;
+    paintText(page, label, totalsX, y, { font, size, color });
+    y = paintRight(page, value, totalsRightEdge, y, { font, size, color });
+    y -= strong ? 8 : 6;
   };
 
   drawTotalRow("Subtotal", data.formatted.subtotal);
   drawTotalRow("Discount", data.formatted.discount);
   drawTotalRow("Tax", data.formatted.tax);
+  y -= 4;
   page.drawLine({
-    start: { x: totalsX, y: y + 6 },
-    end: { x: totalsRight, y: y + 6 },
+    start: { x: totalsX, y },
+    end: { x: totalsRightEdge, y },
     thickness: 1.5,
     color: brand,
   });
+  y -= 12;
   drawTotalRow("TOTAL", data.formatted.total, true);
 
   const methodLabel = formatPaymentMethod(data.paymentMethod);
   const statusLabel = formatPaymentStatus(data.paymentStatus);
   if (methodLabel) {
     ensureSpace(24);
-    y -= 4;
+    y -= 8;
     const pay = statusLabel
       ? `Payment method: ${methodLabel} · Payment ${statusLabel}`
       : `Payment method: ${methodLabel}`;
-    y -= drawWrappedText(page, pay, margin, y, {
+    y = paintText(page, pay, margin, y, {
       font: regular,
       size: 10,
       maxWidth: contentWidth,
@@ -562,7 +587,7 @@ export async function generateInvoicePdf(
 
   if (qr) {
     ensureSpace(L.qrSize + 70);
-    y -= 4;
+    y -= 8;
     const boxH = L.qrSize + 50;
     const boxW = Math.min(contentWidth, L.qrSize + 60);
     const boxX = margin + (contentWidth - boxW) / 2;
@@ -576,14 +601,11 @@ export async function generateInvoicePdf(
       borderWidth: 1,
       borderDashArray: [4, 3],
     });
-    const scan = "SCAN TO PAY";
-    const sw = bold.widthOfTextAtSize(scan, 10);
-    page.drawText(scan, {
-      x: boxX + (boxW - sw) / 2,
-      y: boxY + boxH - 20,
-      size: 10,
+    paintText(page, "SCAN TO PAY", boxX, y - 8, {
       font: bold,
-      color: COLOR.text,
+      size: 10,
+      maxWidth: boxW,
+      align: "center",
     });
     const qrSize = L.qrSize;
     page.drawImage(qr, {
@@ -593,14 +615,11 @@ export async function generateInvoicePdf(
       height: qrSize,
     });
     if (data.upi.upiId) {
-      const upi = `UPI ID: ${data.upi.upiId}`;
-      const uw = regular.widthOfTextAtSize(upi, 9);
-      page.drawText(upi, {
-        x: boxX + (boxW - uw) / 2,
-        y: boxY + 10,
-        size: 9,
+      paintText(page, `UPI ID: ${data.upi.upiId}`, boxX, boxY + 22, {
         font: regular,
-        color: COLOR.text,
+        size: 9,
+        maxWidth: boxW,
+        align: "center",
       });
     }
     y = boxY - 14;
@@ -608,7 +627,7 @@ export async function generateInvoicePdf(
 
   if (data.notes) {
     ensureSpace(40);
-    y -= drawWrappedText(page, `Notes: ${data.notes}`, margin, y, {
+    y = paintText(page, `Notes: ${data.notes}`, margin, y, {
       font: regular,
       size: 9,
       color: COLOR.muted,
@@ -619,28 +638,22 @@ export async function generateInvoicePdf(
   }
   if (data.business.paymentInstructions) {
     ensureSpace(40);
-    y -= drawWrappedText(
-      page,
-      data.business.paymentInstructions,
-      margin,
-      y,
-      {
-        font: regular,
-        size: 9,
-        color: COLOR.muted,
-        maxWidth: contentWidth,
-        lineHeightFactor: 1.25,
-      }
-    );
+    y = paintText(page, data.business.paymentInstructions, margin, y, {
+      font: regular,
+      size: 9,
+      color: COLOR.muted,
+      maxWidth: contentWidth,
+      lineHeightFactor: 1.25,
+    });
     y -= 4;
   }
 
   ensureSpace(24);
-  drawWrappedText(
+  paintText(
     page,
     data.business.invoiceFooter || "Thank you for your business!",
     margin,
-    Math.max(y - 4, margin),
+    Math.max(y - 8, margin + glyphHeight(bold, 10)),
     { font: bold, size: 10, maxWidth: contentWidth }
   );
 

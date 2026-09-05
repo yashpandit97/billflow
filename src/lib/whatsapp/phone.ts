@@ -17,7 +17,7 @@ export function normalizeWhatsAppPhone(
   if (!parsed || !parsed.isValid()) {
     return {
       ok: false,
-      error: "Enter a valid WhatsApp number (e.g. +91XXXXXXXXXX)",
+      error: "Enter a valid phone number (e.g. +91XXXXXXXXXX)",
     };
   }
 

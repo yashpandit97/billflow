@@ -1,20 +1,18 @@
 "use client";
 
-import { SendWhatsAppDialog } from "@/components/bills/send-whatsapp-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/currency/format";
-import type { Bill, WhatsAppDeliveryStatus } from "@/types/database";
+import type { Bill } from "@/types/database";
 import { format } from "date-fns";
-import { MessageCircle, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 type BillRow = Bill & {
   customers?: { name: string } | null;
-  latestWhatsAppStatus?: WhatsAppDeliveryStatus | null;
 };
 
 export function BillsTable({
@@ -34,7 +32,6 @@ export function BillsTable({
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
   const [q, setQ] = useState(searchParams.get("q") ?? "");
-  const [waBillId, setWaBillId] = useState<string | null>(null);
 
   function pushParams(updates: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -109,87 +106,64 @@ export function BillsTable({
             </tr>
           </thead>
           <tbody>
-            {bills.map((bill) => {
-              const waStatus = bill.latestWhatsAppStatus;
-              const canWa = bill.status === "paid" && Boolean(bill.invoice_number);
-              return (
-                <tr key={bill.id} className="border-t hover:bg-muted/50">
-                  <td className="px-4 py-3">
+            {bills.map((bill) => (
+              <tr key={bill.id} className="border-t hover:bg-muted/50">
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/bills/${bill.id}`}
+                    className="font-medium hover:underline"
+                  >
+                    {bill.invoice_number ||
+                      (bill.tab_label
+                        ? `Open · ${bill.tab_label}`
+                        : "Open tab")}
+                  </Link>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {format(new Date(bill.created_at), "dd MMM yyyy")}
+                </td>
+                <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                  {bill.customers?.name || "Walk-in"}
+                </td>
+                <td className="px-4 py-3">
+                  {formatCurrency(bill.total, { code: currency, locale })}
+                </td>
+                <td className="hidden px-4 py-3 capitalize text-muted-foreground md:table-cell">
+                  {bill.payment_method?.replace("_", " ") || "—"}
+                </td>
+                <td className="px-4 py-3">
+                  <Badge
+                    variant={
+                      bill.status === "paid"
+                        ? "default"
+                        : bill.status === "cancelled"
+                          ? "destructive"
+                          : "secondary"
+                    }
+                  >
+                    {bill.status}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
                     <Link
                       href={`/bills/${bill.id}`}
-                      className="font-medium hover:underline"
+                      className="inline-flex h-7 items-center rounded-md px-2 text-xs hover:bg-muted"
                     >
-                      {bill.invoice_number ||
-                        (bill.tab_label
-                          ? `Open · ${bill.tab_label}`
-                          : "Open tab")}
+                      View
                     </Link>
-                    {waStatus === "sent" || waStatus === "delivered" ? (
-                      <p className="text-[11px] text-emerald-500">
-                        WhatsApp {waStatus === "delivered" ? "Delivered" : "Sent"}
-                      </p>
-                    ) : waStatus === "failed" ? (
-                      <p className="text-[11px] text-destructive">WhatsApp Failed</p>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {format(new Date(bill.created_at), "dd MMM yyyy")}
-                  </td>
-                  <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
-                    {bill.customers?.name || "Walk-in"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {formatCurrency(bill.total, { code: currency, locale })}
-                  </td>
-                  <td className="hidden px-4 py-3 capitalize text-muted-foreground md:table-cell">
-                    {bill.payment_method?.replace("_", " ") || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge
-                      variant={
-                        bill.status === "paid"
-                          ? "default"
-                          : bill.status === "cancelled"
-                            ? "destructive"
-                            : "secondary"
-                      }
+                    <Link
+                      href={`/bills/${bill.id}/print`}
+                      target="_blank"
+                      className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs hover:bg-muted"
                     >
-                      {bill.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      <Link
-                        href={`/bills/${bill.id}`}
-                        className="inline-flex h-7 items-center rounded-md px-2 text-xs hover:bg-muted"
-                      >
-                        View
-                      </Link>
-                      <Link
-                        href={`/bills/${bill.id}/print`}
-                        target="_blank"
-                        className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs hover:bg-muted"
-                      >
-                        <Printer className="size-3.5" />
-                        Print
-                      </Link>
-                      {canWa ? (
-                        <button
-                          type="button"
-                          className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs hover:bg-muted"
-                          onClick={() => setWaBillId(bill.id)}
-                        >
-                          <MessageCircle className="size-3.5" />
-                          {waStatus === "sent" || waStatus === "delivered"
-                            ? "Send Again"
-                            : "WhatsApp"}
-                        </button>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                      <Printer className="size-3.5" />
+                      Print
+                    </Link>
+                  </div>
+                </td>
+              </tr>
+            ))}
             {!bills.length ? (
               <tr>
                 <td
@@ -224,16 +198,6 @@ export function BillsTable({
             Next
           </Button>
         </div>
-      ) : null}
-
-      {waBillId ? (
-        <SendWhatsAppDialog
-          billId={waBillId}
-          open={Boolean(waBillId)}
-          onOpenChange={(open) => {
-            if (!open) setWaBillId(null);
-          }}
-        />
       ) : null}
     </div>
   );

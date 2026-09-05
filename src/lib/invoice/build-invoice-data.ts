@@ -8,7 +8,7 @@ import type {
 } from "@/types/database";
 import { format } from "date-fns";
 
-/** Canonical invoice representation shared by preview, print, PDF, and WhatsApp. */
+/** Canonical invoice representation shared by preview, print, PDF, and email. */
 export type InvoiceData = {
   business: {
     name: string;

@@ -50,7 +50,6 @@ export function SettingsClient({
   userEmail,
   paymentSettings,
   tables,
-  cloudApiReady,
   subscriptionOverview,
   canManageBilling = false,
   defaultTab = "profile",
@@ -63,7 +62,6 @@ export function SettingsClient({
   userEmail: string;
   paymentSettings: PaymentSettings | null;
   tables: DiningTable[];
-  cloudApiReady: boolean;
   subscriptionOverview?: {
     priceLabel: string;
     status: string;
@@ -130,7 +128,6 @@ export function SettingsClient({
             <TabsTrigger value="branding">Branding</TabsTrigger>
             <TabsTrigger value="payment">Payment</TabsTrigger>
             <TabsTrigger value="invoice">Invoice</TabsTrigger>
-            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
             <TabsTrigger value="tax">Tax</TabsTrigger>
           </>
         ) : null}
@@ -416,30 +413,6 @@ export function SettingsClient({
             />
           </div>
         ) : null}
-      </TabsContent>
-
-      <TabsContent value="whatsapp" className="rounded-xl border border-border bg-card p-4 sm:p-6">
-        <div className="max-w-lg space-y-3">
-          <div>
-            <h3 className="font-medium">WhatsApp invoices</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              After you create a bill, tap <strong>Send on WhatsApp</strong> to
-              share the PDF with your customer. Messages go from BillMoney&apos;s
-              WhatsApp number; your business name appears in the message.
-            </p>
-          </div>
-          <p
-            className={
-              cloudApiReady
-                ? "rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                : "rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground"
-            }
-          >
-            {cloudApiReady
-              ? "Official WhatsApp sending is ready."
-              : "Official WhatsApp sending is not connected yet. You can still open WhatsApp manually from a bill."}
-          </p>
-        </div>
       </TabsContent>
 
       <TabsContent value="tax" className="rounded-xl border border-border bg-card p-4 sm:p-6">

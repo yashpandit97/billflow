@@ -40,37 +40,12 @@ export default async function BillsPage({
   const { data: bills, count } = await query;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
-  const billIds = (bills ?? []).map((b) => b.id);
-  const { data: deliveries } = billIds.length
-    ? await supabase
-        .from("whatsapp_invoice_deliveries")
-        .select("bill_id, status, created_at")
-        .eq("tenant_id", tenantId)
-        .in("bill_id", billIds)
-        .order("created_at", { ascending: false })
-    : { data: [] as Array<{ bill_id: string; status: string }> };
-
-  const latestByBill = new Map<string, string>();
-  for (const d of deliveries ?? []) {
-    if (!latestByBill.has(d.bill_id)) latestByBill.set(d.bill_id, d.status);
-  }
-
-  const billsWithWa = (bills ?? []).map((b) => ({
-    ...b,
-    latestWhatsAppStatus: (latestByBill.get(b.id) as
-      | "pending"
-      | "sent"
-      | "delivered"
-      | "failed"
-      | undefined) ?? null,
-  }));
-
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Bills</h1>
         <p className="text-sm text-muted-foreground">
-          Search, filter, reprint, WhatsApp, and manage invoice history.
+          Search, filter, reprint, and manage invoice history.
         </p>
       </div>
 
@@ -85,7 +60,7 @@ export default async function BillsPage({
       ) : (
         <Suspense>
           <BillsTable
-            bills={billsWithWa}
+            bills={bills ?? []}
             currency={business.currency}
             locale={business.locale}
             page={page}

@@ -19,7 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { WhatsAppInvoiceDelivery } from "@/types/database";
 import {
   Ban,
   CheckCircle2,
@@ -32,35 +31,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-function DeliveryBadge({ delivery }: { delivery: WhatsAppInvoiceDelivery | null }) {
-  if (!delivery) return null;
-  const label =
-    delivery.status === "delivered"
-      ? "✓ Delivered"
-      : delivery.status === "sent"
-        ? "✓ Sent"
-        : delivery.status === "failed"
-          ? "✕ Failed"
-          : "Pending";
-  const className =
-    delivery.status === "failed"
-      ? "text-destructive"
-      : delivery.status === "delivered" || delivery.status === "sent"
-        ? "text-emerald-500"
-        : "text-muted-foreground";
-  return (
-    <p className={`text-sm font-medium ${className}`}>
-      WhatsApp API {label}
-    </p>
-  );
-}
-
 export function BillActions({
   billId,
   status,
   paymentStatus,
   tabLabel,
-  latestDelivery = null,
   canCancel = true,
   canRefund = false,
   refundMaxMajor = 0,
@@ -70,13 +45,13 @@ export function BillActions({
   invoiceNumber,
   totalMinor,
   customerName,
+  customerEmail,
   paymentMethod,
 }: {
   billId: string;
   status: string;
   paymentStatus?: string;
   tabLabel?: string | null;
-  latestDelivery?: WhatsAppInvoiceDelivery | null;
   canCancel?: boolean;
   canRefund?: boolean;
   refundMaxMajor?: number;
@@ -86,6 +61,7 @@ export function BillActions({
   invoiceNumber: string;
   totalMinor: number;
   customerName?: string | null;
+  customerEmail?: string | null;
   paymentMethod?: string | null;
 }) {
   const router = useRouter();
@@ -112,6 +88,7 @@ export function BillActions({
             invoiceNumber={invoiceNumber}
             businessName={businessName}
             customerName={customerName}
+            customerEmail={customerEmail}
             totalMinor={totalMinor}
             currency={currency}
             locale={locale}
@@ -234,15 +211,6 @@ export function BillActions({
           </>
         ) : null}
       </div>
-
-      {latestDelivery ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border px-3 py-2">
-          <div>
-            <p className="text-xs text-muted-foreground">WhatsApp API delivery</p>
-            <DeliveryBadge delivery={latestDelivery} />
-          </div>
-        </div>
-      ) : null}
 
       <RecordRefundDialog
         billId={billId}

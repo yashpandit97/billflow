@@ -20,7 +20,7 @@ const steps = [
     icon: Share2,
     title: "Share and get paid",
     description:
-      "Print it, download it, or send it directly to your customer on WhatsApp.",
+      "Print it, download it, or email the invoice PDF to your customer.",
   },
 ];
 

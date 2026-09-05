@@ -3,7 +3,6 @@ import { InvoiceDocument } from "@/components/invoice/invoice-document";
 import { Badge } from "@/components/ui/badge";
 import { hasPermission } from "@/lib/auth/permissions";
 import { getActiveMembership } from "@/lib/auth/session";
-import type { WhatsAppInvoiceDelivery } from "@/types/database";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -15,35 +14,25 @@ export default async function BillDetailPage({
   const { id } = await params;
   const { supabase, tenantId, business, role } = await getActiveMembership();
 
-  const [{ data: bill }, { data: paymentSettings }, { data: deliveries }] =
-    await Promise.all([
-      supabase
-        .from("bills")
-        .select("*, customers(*), bill_items(*)")
-        .eq("id", id)
-        .eq("tenant_id", tenantId)
-        .maybeSingle(),
-      supabase
-        .from("payment_settings")
-        .select("*")
-        .eq("business_id", tenantId)
-        .maybeSingle(),
-      supabase
-        .from("whatsapp_invoice_deliveries")
-        .select("*")
-        .eq("bill_id", id)
-        .eq("tenant_id", tenantId)
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
+  const [{ data: bill }, { data: paymentSettings }] = await Promise.all([
+    supabase
+      .from("bills")
+      .select("*, customers(*), bill_items(*)")
+      .eq("id", id)
+      .eq("tenant_id", tenantId)
+      .maybeSingle(),
+    supabase
+      .from("payment_settings")
+      .select("*")
+      .eq("business_id", tenantId)
+      .maybeSingle(),
+  ]);
 
   if (!bill) notFound();
 
   const items = [...(bill.bill_items ?? [])].sort(
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
-
-  const latestDelivery = (deliveries?.[0] as WhatsAppInvoiceDelivery | undefined) ?? null;
 
   const { data: refunds } =
     bill.status === "paid"
@@ -100,7 +89,6 @@ export default async function BillDetailPage({
             status={bill.status}
             paymentStatus={bill.payment_status}
             tabLabel={bill.tab_label}
-            latestDelivery={latestDelivery}
             canCancel={hasPermission(role, "bill:cancel")}
             canRefund={hasPermission(role, "bill:refund") && refundMaxMajor > 0}
             refundMaxMajor={refundMaxMajor}
@@ -110,6 +98,7 @@ export default async function BillDetailPage({
             invoiceNumber={bill.invoice_number || bill.id.slice(0, 8)}
             totalMinor={bill.total}
             customerName={bill.customers?.name}
+            customerEmail={bill.customers?.email}
             paymentMethod={bill.payment_method}
           />
         </div>

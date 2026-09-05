@@ -27,7 +27,7 @@ export function LandingFooter() {
             <BrandLogo />
             <p className="max-w-xs text-sm text-muted-foreground">
               Simple billing and invoicing for Indian small and medium businesses.
-              Create bills, share on WhatsApp, and accept UPI payments.
+              Create bills, email invoices, and accept UPI payments.
             </p>
           </div>
 

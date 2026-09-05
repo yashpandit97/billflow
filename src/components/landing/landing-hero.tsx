@@ -24,7 +24,7 @@ export function LandingHero() {
             <span className="text-primary">Built for your business.</span>
           </h1>
           <p className="mt-5 max-w-xl text-pretty text-base text-muted-foreground sm:text-lg">
-            Create professional bills, manage products, share invoices on WhatsApp,
+            Create professional bills, manage products, email invoices,
             and accept UPI payments — without complicated billing software.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
