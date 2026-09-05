@@ -21,7 +21,12 @@ export function OwnerAdminLoginForm() {
         <Input
           id="username"
           name="username"
+          type="text"
+          inputMode="text"
           autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           required
           placeholder="admin"
         />
