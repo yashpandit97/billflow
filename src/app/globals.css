@@ -93,10 +93,20 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground;
   }
-  html {
-    @apply font-sans;
+  /* Native <select> popups inherit page text color; without a dark
+     color-scheme, options render light-on-light until hover. */
+  select {
+    color-scheme: dark;
+  }
+  option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
   }
 }

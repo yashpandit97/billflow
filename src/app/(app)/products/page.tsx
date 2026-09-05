@@ -20,7 +20,7 @@ export default async function ProductsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your catalog. Soft-deactivate items instead of deleting history.
+          Add items you sell so you can tap them when creating a bill.
         </p>
       </div>
 
@@ -28,8 +28,8 @@ export default async function ProductsPage() {
         <div className="space-y-4">
           <EmptyState
             icon={Package}
-            title="No products yet"
-            description="Add your first product to start creating bills."
+            title="Add your first product"
+            description="Examples: Masala dosa, Haircut, Repair service. You can change prices anytime."
           />
           <ProductsManager
             products={[]}

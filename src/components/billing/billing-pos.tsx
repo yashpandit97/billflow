@@ -771,7 +771,7 @@ export function BillingPos({
           </div>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Payment status</Label>
+          <Label className="text-xs">Money received?</Label>
           <select
             value={paymentStatus}
             onChange={(e) =>
@@ -780,8 +780,8 @@ export function BillingPos({
             className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm"
             disabled={openTabsEnabled && !activeTabId}
           >
-            <option value="paid">Paid (received)</option>
-            <option value="pending">Pending</option>
+            <option value="paid">Yes — mark as paid</option>
+            <option value="pending">Not yet — customer will pay later</option>
           </select>
         </div>
         <Textarea
@@ -831,7 +831,7 @@ export function BillingPos({
             }
             onClick={() => completeBill("paid")}
           >
-            {pending ? "Saving…" : "Complete"}
+            {pending ? "Creating…" : "Create invoice"}
           </Button>
         </div>
       </div>
@@ -955,13 +955,18 @@ export function BillingPos({
           </div>
           <div className="flex items-center justify-between border-t bg-card p-3 md:hidden">
             <div>
-              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-xs text-muted-foreground">
+                {cart.length} item{cart.length === 1 ? "" : "s"}
+              </p>
               <p className="text-lg font-semibold">
                 {formatCurrency(calc.total, { code: currency, locale })}
               </p>
             </div>
-            <Button onClick={() => setCartOpen(true)}>
-              View cart ({cart.length})
+            <Button
+              disabled={!cart.length}
+              onClick={() => setCartOpen(true)}
+            >
+              {cart.length ? "Create invoice" : "View cart"}
             </Button>
           </div>
         </div>

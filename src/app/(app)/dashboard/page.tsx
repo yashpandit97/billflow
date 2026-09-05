@@ -3,6 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getActiveMembership } from "@/lib/auth/session";
 import { formatCurrency } from "@/lib/currency/format";
+import {
+  formatTrialRemaining,
+  isTrialActive,
+  type TenantSubscription,
+} from "@/lib/subscription/constants";
 import { endOfDay, format, startOfDay, startOfMonth } from "date-fns";
 import { Package, Receipt, ShoppingCart } from "lucide-react";
 import Link from "next/link";
@@ -47,7 +52,7 @@ export default async function DashboardPage() {
       .limit(6),
     supabase
       .from("tenant_subscriptions")
-      .select("status, trial_ends_at")
+      .select("*")
       .eq("tenant_id", tenantId)
       .maybeSingle(),
   ]);
@@ -59,9 +64,13 @@ export default async function DashboardPage() {
   const money = (n: number) =>
     formatCurrency(n, { code: business.currency, locale: business.locale });
 
-  const trialEnds =
-    subscription?.trial_ends_at && subscription.status === "trialing"
-      ? format(new Date(subscription.trial_ends_at), "dd MMM yyyy")
+  const sub = subscription as TenantSubscription | null;
+  const trialActive = sub ? isTrialActive(sub) : false;
+  const remaining =
+    trialActive && sub ? formatTrialRemaining(sub.trial_ends_at) : null;
+  const trialEndsDate =
+    trialActive && sub
+      ? format(new Date(sub.trial_ends_at), "dd MMM yyyy HH:mm")
       : null;
 
   return (
@@ -71,10 +80,16 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
       </div>
 
-      {trialEnds ? (
+      {trialActive && remaining ? (
         <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-          Free trial until <strong>{trialEnds}</strong>. Then ₹999/month for your
-          whole team.
+          Free trial: <strong>{remaining}</strong> remaining
+          {trialEndsDate ? (
+            <span className="text-muted-foreground">
+              {" "}
+              (ends {trialEndsDate})
+            </span>
+          ) : null}
+          . Then ₹999/month for your whole team.
         </div>
       ) : null}
 

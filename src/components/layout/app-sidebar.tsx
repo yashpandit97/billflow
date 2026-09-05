@@ -4,28 +4,31 @@ import { logoutAction } from "@/app/actions/auth";
 import { BrandMark } from "@/components/landing/brand-logo";
 import { cn } from "@/lib/utils";
 import {
+  FileText,
   LayoutDashboard,
   LogOut,
   Package,
-  Receipt,
+  PlusCircle,
   Settings,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const desktopNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/billing", label: "New Bill", icon: Receipt },
-  { href: "/bills", label: "Bills", icon: Receipt },
+  { href: "/billing", label: "New Bill", icon: PlusCircle },
+  { href: "/bills", label: "Bills", icon: FileText },
   { href: "/products", label: "Products", icon: Package },
-  { href: "/customers", label: "Customers", icon: Package },
+  { href: "/customers", label: "Customers", icon: Users },
   { href: "/reports", label: "Reports", icon: LayoutDashboard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const mobileNav = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/bills", label: "Bills", icon: Receipt },
+  { href: "/bills", label: "Bills", icon: FileText },
+  { href: "/billing", label: "New Bill", icon: PlusCircle, emphasize: true },
   { href: "/products", label: "Products", icon: Package },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -93,16 +96,20 @@ export function MobileNav() {
             ? pathname === "/dashboard"
             : pathname.startsWith(item.href));
         const Icon = item.icon;
+        const emphasize = "emphasize" in item && item.emphasize;
         return (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
               "flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium",
+              emphasize && !active && "text-foreground",
               active ? "text-primary" : "text-muted-foreground"
             )}
           >
-            <Icon className="size-5" />
+            <Icon
+              className={cn("size-5", emphasize && "size-6 text-primary")}
+            />
             {item.label}
           </Link>
         );

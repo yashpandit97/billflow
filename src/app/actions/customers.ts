@@ -1,6 +1,7 @@
 "use server";
 
 import { getActiveMembership } from "@/lib/auth/session";
+import { assertTenantCanUseApp } from "@/lib/subscription/service";
 import { customerSchema } from "@/lib/validation/schemas";
 import { normalizeWhatsAppPhone } from "@/lib/whatsapp/phone";
 import { revalidatePath } from "next/cache";
@@ -15,6 +16,10 @@ export async function upsertCustomerAction(
   _prev: CustomerActionResult,
   formData: FormData
 ): Promise<CustomerActionResult> {
+  const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const id = formData.get("id") as string | null;
   const parsed = customerSchema.safeParse({
     name: formData.get("name"),
@@ -35,7 +40,6 @@ export async function upsertCustomerAction(
     phone = normalized.e164;
   }
 
-  const { supabase, tenantId } = await getActiveMembership();
   const payload = {
     tenant_id: tenantId,
     name: parsed.data.name,
@@ -72,6 +76,9 @@ export async function upsertCustomerAction(
 
 export async function deleteCustomerAction(customerId: string) {
   const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const { error } = await supabase
     .from("customers")
     .delete()

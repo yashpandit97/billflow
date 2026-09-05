@@ -15,9 +15,11 @@ export function ReferAndEarnPanel({
   freeMonthsAvailable,
   priceLabel,
   trialEndsAt,
+  trialRemaining,
   nextBillingDate,
   status,
   isTrial,
+  needsPayment,
 }: {
   referralLink: string;
   referralCode: string | null;
@@ -27,9 +29,11 @@ export function ReferAndEarnPanel({
   freeMonthsAvailable: number;
   priceLabel: string;
   trialEndsAt: string | null;
+  trialRemaining?: string | null;
   nextBillingDate: string | null;
   status: string;
   isTrial: boolean;
+  needsPayment?: boolean;
 }) {
   const shareText = buildReferralShareMessage("BillMoney", referralLink);
 
@@ -114,7 +118,19 @@ export function ReferAndEarnPanel({
           {isTrial && trialEndsAt ? (
             <p>
               <span className="text-muted-foreground">Trial ends:</span>{" "}
-              {trialEndsAt}
+              {trialRemaining ? (
+                <>
+                  <strong>{trialRemaining}</strong> remaining ({trialEndsAt})
+                </>
+              ) : (
+                trialEndsAt
+              )}
+            </p>
+          ) : null}
+          {needsPayment ? (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-destructive">
+              Your trial has ended. Contact the BillMoney owner to subscribe at{" "}
+              {priceLabel}.
             </p>
           ) : null}
           {nextBillingDate ? (

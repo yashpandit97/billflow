@@ -32,23 +32,59 @@ export async function getUnusedCreditMonths(
 export function describeSubscription(sub: TenantSubscription | null) {
   if (!sub) {
     return {
-      canUseApp: true,
+      canUseApp: false,
       isTrial: false,
       isActive: false,
-      needsPayment: false,
+      isComplimentary: false,
+      needsPayment: true,
       label: "Unknown",
+      trialEndsAt: null as string | null,
+      periodEnd: null as string | null,
     };
   }
   const now = new Date();
   const trial = isTrialActive(sub, now);
   const active = isSubscriptionActive(sub, now);
+  const complimentary = !!sub.is_complimentary && sub.status === "active";
+  // Paid or complimentary active, or still-open trial. Expired trialing counts as blocked.
+  const canUseApp = trial || (sub.status === "active" && active);
+  const needsPayment =
+    !canUseApp &&
+    (sub.status === "past_due" ||
+      sub.status === "expired" ||
+      (sub.status === "trialing" && !trial) ||
+      (sub.status === "active" && !active));
+
   return {
-    canUseApp: trial || active || sub.status === "past_due",
+    canUseApp,
     isTrial: trial,
-    isActive: sub.status === "active",
-    needsPayment: sub.status === "past_due" || sub.status === "expired",
-    label: sub.status,
+    isActive: sub.status === "active" && active,
+    isComplimentary: complimentary,
+    needsPayment,
+    label: complimentary
+      ? "complimentary"
+      : trial
+        ? "trialing"
+        : !canUseApp && sub.status === "trialing"
+          ? "expired"
+          : sub.status,
     trialEndsAt: sub.trial_ends_at,
     periodEnd: sub.current_period_end,
   };
+}
+
+export async function assertTenantCanUseApp(
+  supabase: SupabaseClient,
+  tenantId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const sub = await getTenantSubscription(supabase, tenantId);
+  const meta = describeSubscription(sub);
+  if (!meta.canUseApp) {
+    return {
+      ok: false,
+      error:
+        "Your free trial has ended. Subscribe to BillMoney (₹999/month) to continue.",
+    };
+  }
+  return { ok: true };
 }

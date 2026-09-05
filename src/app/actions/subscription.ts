@@ -8,10 +8,10 @@ import {
 } from "@/lib/subscription/service";
 import {
   formatSubscriptionPrice,
+  formatTrialRemaining,
   SUBSCRIPTION_AMOUNT_MAJOR,
 } from "@/lib/subscription/constants";
 import { format } from "date-fns";
-import { revalidatePath } from "next/cache";
 
 export async function getSubscriptionOverviewAction() {
   const { supabase, tenantId, business, role } = await getActiveMembership();
@@ -46,19 +46,27 @@ export async function getSubscriptionOverviewAction() {
     ? `${process.env.NEXT_PUBLIC_APP_URL || ""}/signup?ref=${business.referral_code}`
     : "";
 
+  const trialRemaining =
+    meta.isTrial && sub?.trial_ends_at
+      ? formatTrialRemaining(sub.trial_ends_at)
+      : null;
+
   return {
     plan: "Standard",
     priceLabel: `${formatSubscriptionPrice(business.locale)}/month`,
     amount: SUBSCRIPTION_AMOUNT_MAJOR,
     status: meta.label,
     isTrial: meta.isTrial,
+    isComplimentary: meta.isComplimentary,
+    needsPayment: meta.needsPayment,
+    trialRemaining,
     trialEndsAt: sub?.trial_ends_at
-      ? format(new Date(sub.trial_ends_at), "dd MMMM yyyy")
+      ? format(new Date(sub.trial_ends_at), "dd MMMM yyyy HH:mm")
       : null,
     nextBillingDate: sub?.current_period_end
       ? format(new Date(sub.current_period_end), "dd MMMM yyyy")
-      : sub?.trial_ends_at
-        ? format(new Date(sub.trial_ends_at), "dd MMMM yyyy")
+      : meta.isTrial && sub?.trial_ends_at
+        ? format(new Date(sub.trial_ends_at), "dd MMMM yyyy HH:mm")
         : null,
     freeMonthsAvailable: creditMonths,
     referralCode: business.referral_code,
@@ -70,39 +78,3 @@ export async function getSubscriptionOverviewAction() {
   };
 }
 
-export async function markSubscriptionPaidAction() {
-  const { supabase, tenantId, role } = await getActiveMembership();
-  if (role !== "owner") {
-    return { error: "Only the business owner can manage billing" };
-  }
-
-  const now = new Date().toISOString();
-  const periodEnd = new Date();
-  periodEnd.setDate(periodEnd.getDate() + 30);
-
-  const { error } = await supabase
-    .from("tenant_subscriptions")
-    .update({
-      status: "active",
-      current_period_start: now,
-      current_period_end: periodEnd.toISOString(),
-      updated_at: now,
-    })
-    .eq("tenant_id", tenantId);
-
-  if (error) return { error: "Could not update subscription" };
-
-  await supabase
-    .from("businesses")
-    .update({
-      subscription_status: "active",
-      subscription_starts_at: now,
-      subscription_ends_at: periodEnd.toISOString(),
-    })
-    .eq("id", tenantId);
-
-  await supabase.rpc("qualify_referral", { p_referred_tenant_id: tenantId });
-
-  revalidatePath("/settings");
-  return { success: true };
-}

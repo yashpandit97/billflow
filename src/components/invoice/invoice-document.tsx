@@ -204,13 +204,22 @@ export function InvoiceDocument({
           {bill.payment_method ? (
             <p>
               Payment method:{" "}
-              <span className="font-medium capitalize">
-                {bill.payment_method.replace("_", " ")}
+              <span className="font-medium">
+                {bill.payment_method === "upi"
+                  ? "UPI"
+                  : bill.payment_method.replace(/_/g, " ").replace(/\b\w/g, (c) =>
+                      c.toUpperCase()
+                    )}
               </span>
               {bill.payment_status ? (
                 <span className="text-muted-foreground">
                   {" "}
-                  · Payment {bill.payment_status}
+                  · Payment{" "}
+                  {bill.payment_status === "paid"
+                    ? "Paid"
+                    : bill.payment_status === "pending"
+                      ? "Pending"
+                      : bill.payment_status}
                 </span>
               ) : null}
             </p>

@@ -1,39 +1,30 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  OWNER_ADMIN_COOKIE,
+  verifyOwnerAdminToken,
+} from "@/lib/admin/session";
+import { createServiceClient } from "@/lib/supabase/admin";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function requirePlatformAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const token = cookieStore.get(OWNER_ADMIN_COOKIE)?.value;
 
-  if (!user) {
-    redirect("/login?next=/admin");
+  if (!(await verifyOwnerAdminToken(token))) {
+    redirect("/admin/login");
   }
 
-  const { data: admin } = await supabase
-    .from("platform_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!admin) {
-    redirect("/dashboard");
-  }
-
-  return { supabase, user };
+  const supabase = createServiceClient();
+  return { supabase, user: null as null };
 }
 
+export async function isOwnerAdminAuthenticated() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(OWNER_ADMIN_COOKIE)?.value;
+  return verifyOwnerAdminToken(token);
+}
+
+/** @deprecated Prefer isOwnerAdminAuthenticated — platform_admins table is no longer the gate. */
 export async function isPlatformAdminUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data } = await supabase
-    .from("platform_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  return !!data;
+  return isOwnerAdminAuthenticated();
 }

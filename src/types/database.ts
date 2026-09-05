@@ -184,9 +184,13 @@ export interface PaymentSettings {
   updated_at: string;
 }
 
+export type TrialDurationUnit = "minutes" | "hours" | "days";
+
 export interface PlatformSettings {
   id: number;
   fee_percentage_bps: number;
+  trial_duration_value: number;
+  trial_duration_unit: TrialDurationUnit;
   updated_at: string;
 }
 
@@ -219,8 +223,20 @@ export interface TenantSubscriptionRow {
   current_period_end: string | null;
   amount: number;
   currency: string;
+  is_complimentary: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface SubscriptionPayment {
+  id: string;
+  tenant_id: string;
+  amount: number;
+  currency: string;
+  paid_at: string;
+  source: string;
+  note: string | null;
+  created_at: string;
 }
 
 export interface Referral {

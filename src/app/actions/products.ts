@@ -2,6 +2,7 @@
 
 import { getActiveMembership } from "@/lib/auth/session";
 import { toMinorUnits } from "@/lib/currency/format";
+import { assertTenantCanUseApp } from "@/lib/subscription/service";
 import { productSchema } from "@/lib/validation/schemas";
 import type { Product } from "@/types/database";
 import { revalidatePath } from "next/cache";
@@ -12,6 +13,10 @@ export async function upsertProductAction(
   _prev: ProductActionResult,
   formData: FormData
 ): Promise<ProductActionResult> {
+  const { supabase, tenantId, user } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const id = formData.get("id") as string | null;
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
@@ -29,7 +34,6 @@ export async function upsertProductAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { supabase, tenantId, user } = await getActiveMembership();
   const payload = {
     tenant_id: tenantId,
     name: parsed.data.name,
@@ -119,6 +123,9 @@ export async function createProductQuickAction(input: {
   }
 
   const { supabase, tenantId, business } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const taxBps =
     parsed.data.tax_rate_percent != null
       ? Math.round(parsed.data.tax_rate_percent * 100)
@@ -151,6 +158,9 @@ export async function createProductQuickAction(input: {
 
 export async function deactivateProductAction(productId: string) {
   const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const { error } = await supabase
     .from("products")
     .update({ is_active: false })
@@ -165,6 +175,9 @@ export async function deactivateProductAction(productId: string) {
 
 export async function activateProductAction(productId: string) {
   const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const { error } = await supabase
     .from("products")
     .update({ is_active: true })
@@ -179,6 +192,9 @@ export async function activateProductAction(productId: string) {
 
 export async function createCategoryAction(name: string) {
   const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const { data, error } = await supabase
     .from("categories")
     .insert({ tenant_id: tenantId, name: name.trim() })

@@ -2,6 +2,7 @@
 
 import { getActiveMembership } from "@/lib/auth/session";
 import { formString } from "@/lib/forms";
+import { assertTenantCanUseApp } from "@/lib/subscription/service";
 import { paymentSettingsSchema } from "@/lib/validation/schemas";
 import { revalidatePath } from "next/cache";
 
@@ -11,6 +12,10 @@ export async function updatePaymentSettingsAction(
   _prev: PaymentActionResult,
   formData: FormData
 ): Promise<PaymentActionResult> {
+  const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
   const parsed = paymentSettingsSchema.safeParse({
     upi_enabled:
       formData.get("upi_enabled") === "on" ||
@@ -23,7 +28,6 @@ export async function updatePaymentSettingsAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { supabase, tenantId } = await getActiveMembership();
   const { error } = await supabase.from("payment_settings").upsert({
     business_id: tenantId,
     upi_enabled: parsed.data.upi_enabled,
@@ -38,6 +42,8 @@ export async function updatePaymentSettingsAction(
   return { success: "Payment settings updated" };
 }
 
+const QR_OK_EXT = new Set(["png", "jpg", "jpeg"]);
+
 export async function uploadUpiQrAction(
   formData: FormData
 ): Promise<PaymentActionResult> {
@@ -45,9 +51,16 @@ export async function uploadUpiQrAction(
   if (!file || file.size === 0) return { error: "Choose a QR image file" };
   if (file.size > 2 * 1024 * 1024) return { error: "QR image must be under 2MB" };
 
-  const { supabase, tenantId } = await getActiveMembership();
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-  const path = `${tenantId}/qr.${ext}`;
+  if (!QR_OK_EXT.has(ext)) {
+    return { error: "Use a PNG or JPG QR image (WebP is not supported on invoices)" };
+  }
+
+  const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
+
+  const path = `${tenantId}/qr.${ext === "jpeg" ? "jpg" : ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from("upi-qr")
@@ -73,6 +86,8 @@ export async function uploadUpiQrAction(
 
 export async function removeUpiQrAction(): Promise<PaymentActionResult> {
   const { supabase, tenantId } = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(supabase, tenantId);
+  if (!gate.ok) return { error: gate.error };
 
   const { data: settings } = await supabase
     .from("payment_settings")

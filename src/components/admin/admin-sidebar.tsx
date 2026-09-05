@@ -1,6 +1,6 @@
 "use client";
 
-import { logoutAction } from "@/app/actions/auth";
+import { ownerAdminLogoutAction } from "@/app/actions/owner-admin";
 import { BrandMark } from "@/components/landing/brand-logo";
 import { cn } from "@/lib/utils";
 import {
@@ -10,6 +10,7 @@ import {
   LineChart,
   LogOut,
   MessageCircle,
+  Settings,
   Users,
   Wallet,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const nav = [
   { href: "/admin/referrals", label: "Referrals", icon: Gift },
   { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/admin/reports", label: "Reports", icon: LineChart },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
@@ -64,7 +66,7 @@ export function AdminSidebar() {
       <div className="border-t border-sidebar-border p-2">
         <button
           type="button"
-          onClick={() => void logoutAction()}
+          onClick={() => void ownerAdminLogoutAction()}
           className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="size-4" />

@@ -148,7 +148,7 @@ export default async function AdminReportsPage({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Bill volume (range)</p>
+          <p className="text-sm text-muted-foreground">Bill volume (customer GMV)</p>
           <p className="text-xl font-semibold text-primary">{money(volume)}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">

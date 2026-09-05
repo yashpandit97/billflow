@@ -1,6 +1,7 @@
 "use server";
 
 import { getActiveMembership } from "@/lib/auth/session";
+import { assertTenantCanUseApp } from "@/lib/subscription/service";
 import {
   brandingSchema,
   businessProfileSchema,
@@ -11,10 +12,25 @@ import { revalidatePath } from "next/cache";
 
 export type SettingsResult = { error?: string; success?: string };
 
+async function requireAppAccess() {
+  const membership = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(
+    membership.supabase,
+    membership.tenantId
+  );
+  if (!gate.ok) {
+    return { error: gate.error, membership: null as null };
+  }
+  return { error: undefined as string | undefined, membership };
+}
+
 export async function updateBusinessProfileAction(
   _prev: SettingsResult,
   formData: FormData
 ): Promise<SettingsResult> {
+  const access = await requireAppAccess();
+  if (access.error || !access.membership) return { error: access.error };
+
   const parsed = businessProfileSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone") || null,
@@ -30,7 +46,7 @@ export async function updateBusinessProfileAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { supabase, tenantId } = await getActiveMembership();
+  const { supabase, tenantId } = access.membership;
   const { error } = await supabase
     .from("businesses")
     .update({
@@ -50,6 +66,9 @@ export async function updateBrandingAction(
   _prev: SettingsResult,
   formData: FormData
 ): Promise<SettingsResult> {
+  const access = await requireAppAccess();
+  if (access.error || !access.membership) return { error: access.error };
+
   const parsed = brandingSchema.safeParse({
     primary_color: formData.get("primary_color"),
     secondary_color: formData.get("secondary_color"),
@@ -60,7 +79,7 @@ export async function updateBrandingAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { supabase, tenantId } = await getActiveMembership();
+  const { supabase, tenantId } = access.membership;
   const { error } = await supabase
     .from("businesses")
     .update(parsed.data)
@@ -75,6 +94,9 @@ export async function updateInvoiceSettingsAction(
   _prev: SettingsResult,
   formData: FormData
 ): Promise<SettingsResult> {
+  const access = await requireAppAccess();
+  if (access.error || !access.membership) return { error: access.error };
+
   const parsed = invoiceSettingsSchema.safeParse({
     invoice_prefix: formData.get("invoice_prefix"),
     invoice_starting_number: formData.get("invoice_starting_number"),
@@ -87,7 +109,7 @@ export async function updateInvoiceSettingsAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { supabase, tenantId } = await getActiveMembership();
+  const { supabase, tenantId } = access.membership;
 
   const { count } = await supabase
     .from("bills")
@@ -136,6 +158,9 @@ export async function updateTaxSettingsAction(
   _prev: SettingsResult,
   formData: FormData
 ): Promise<SettingsResult> {
+  const access = await requireAppAccess();
+  if (access.error || !access.membership) return { error: access.error };
+
   const parsed = taxSettingsSchema.safeParse({
     tax_enabled:
       formData.get("tax_enabled") === "on" || formData.get("tax_enabled") === "true",
@@ -147,7 +172,7 @@ export async function updateTaxSettingsAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { supabase, tenantId } = await getActiveMembership();
+  const { supabase, tenantId } = access.membership;
   const { error } = await supabase
     .from("businesses")
     .update({
@@ -164,14 +189,27 @@ export async function updateTaxSettingsAction(
   return { success: "Tax & currency settings updated" };
 }
 
+const LOGO_OK_TYPES = new Set(["image/png", "image/jpeg", "image/jpg"]);
+const LOGO_OK_EXT = new Set(["png", "jpg", "jpeg"]);
+
 export async function uploadLogoAction(formData: FormData): Promise<SettingsResult> {
   const file = formData.get("logo") as File | null;
   if (!file || file.size === 0) return { error: "Choose a logo file" };
   if (file.size > 2 * 1024 * 1024) return { error: "Logo must be under 2MB" };
 
-  const { supabase, tenantId } = await getActiveMembership();
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-  const path = `${tenantId}/logo.${ext}`;
+  if (
+    !LOGO_OK_EXT.has(ext) ||
+    (file.type && !LOGO_OK_TYPES.has(file.type) && file.type !== "image/jpg")
+  ) {
+    return { error: "Use a PNG or JPG logo (WebP is not supported on invoices)" };
+  }
+
+  const access = await requireAppAccess();
+  if (access.error || !access.membership) return { error: access.error };
+
+  const { supabase, tenantId } = access.membership;
+  const path = `${tenantId}/logo.${ext === "jpeg" ? "jpg" : ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from("logos")

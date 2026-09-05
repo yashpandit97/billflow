@@ -2,7 +2,7 @@
 
 Multi-tenant billing SaaS for small businesses. One deployment, many tenants, strong RLS isolation.
 
-**Business model:** **₹999/month per business** (one subscription covers all staff). **30-day free trial** on signup. Referrals earn **1 free month** when the referred business becomes a paying customer. No transaction-based platform fees on customer invoices.
+**Business model:** **₹999/month per business** (one subscription covers all staff). Configurable free trial on signup (set in Admin → Settings; marketing promises 30 days). Referrals earn **1 free month** when the referred business becomes a paying customer. No transaction-based platform fees on customer invoices.
 
 ## Tech stack
 
@@ -27,50 +27,43 @@ Platform (BillMoney)
 ### Subscription billing
 
 - **₹999/month** per business tenant (integer paise in DB: `99900`)
-- **30-day free trial** starts when the business is created
+- Free trial length is configured in **Admin → Settings** (`platform_settings`); default for testing is 5 minutes, production target 30 days
 - One subscription covers owner + all staff users
-- `tenant_subscriptions`, `subscription_credits`, modular payment stub (`markSubscriptionPaidAction` for MVP)
+- Platform owner records payments or grants complimentary access under **Admin → Subscriptions**
 - Referrals: unique `referral_code` per business; reward = 1 free month credit when referred tenant pays
 
 ### Invoice sharing (mobile-first)
 
-- **Share Invoice** uses native Web Share API (PDF + pre-written message) where supported
+- After creating a bill, **Send on WhatsApp** shares the PDF + message
 - Fallback: download PDF, copy message, open WhatsApp Web
-- No WhatsApp Business API required for MVP — owner taps Send in WhatsApp manually
 - Customer invoices never show SaaS subscription fees
+- PDF is generated with pdf-lib (Workers-safe) from the same invoice data as on-screen preview
 
 ### UPI QR
 
-- Settings → Payment: enable UPI, set UPI ID, **upload owner QR** (Storage `upi-qr`)
+- Settings → Payment: enable UPI, set UPI ID, **upload owner QR** (PNG/JPG; Storage `upi-qr`)
 - Invoices show QR only when `payment_method = upi` and a QR is configured
 - `payment_status` (`pending` | `paid`) is separate from payment method — UPI does not auto-confirm payment
-- `payment_qr_mode` supports future `dynamic` URI QR; MVP is `uploaded`
 
 ### Restaurant / open tabs + guest QR menu
 
-- Settings → Invoice: enable **Restaurant / open tabs mode**
-- Settings → Tables: create dining tables; each gets a unique QR → `/m/{slug}/t/{token}`
+- Settings → Invoice: enable **Cafe / restaurant mode**
+- Tables & QR menus appear under Invoice when mode is on; each table QR → `/m/{slug}/t/{token}`
 - Guests scan QR (no login), browse the menu, send orders to that table’s open draft bill
 - Billing POS shows a tab strip; guest items appear live (Realtime); staff Completes to finalize invoice
-- Walk-in / takeaway tabs (no table) are supported alongside table tabs
 
 ### WhatsApp invoice delivery
 
-- **Primary (MVP):** Share Invoice → native share sheet → WhatsApp with PDF + message
-- **Cloud API:** All tenant invoices are sent from **BillMoney’s** WhatsApp Business number (platform credentials in Admin → WhatsApp, or Worker env)
-- **Webhook (delivery receipts):** Meta Callback URL `{SITE_URL}/api/whatsapp/webhook`
-  - Set Worker runtime secrets `WHATSAPP_WEBHOOK_VERIFY_TOKEN` (same string as Meta Verify token) and optionally `WHATSAPP_APP_SECRET`
-  - Optional sender env: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_BUSINESS_ACCOUNT_ID`
-  - After Verify and save, subscribe the webhook field **messages**
-  - Create an approved Meta template named `invoice_delivery` (document header + body: customer, business, invoice #, amount)
+- **Primary:** Send on WhatsApp from a bill (Cloud API when configured, else open WhatsApp)
+- **Cloud API:** All tenant invoices are sent from **BillMoney’s** WhatsApp Business number (Admin → WhatsApp, or Worker env)
+- **Webhook:** Meta Callback URL `{SITE_URL}/api/whatsapp/webhook`
 - Invoice creation never depends on WhatsApp success
-- Businesses do **not** connect their own WhatsApp Cloud API accounts
 
 ### Multi-tenancy / RLS
 
 - Every tenant row has `tenant_id` / membership checks via `user_business_ids()`
 - `platform_fee_records` is deprecated (fees disabled); kept for historical data only
-- `/admin` requires a `platform_admins` row (server + middleware)
+- `/admin` uses a hardcoded owner login cookie (see below) — not a Supabase user row
 
 ## Local setup
 
@@ -85,17 +78,14 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Promote a platform admin
+### Owner admin login
 
-After signup (or after seed, which promotes the first auth user):
+Owner admin uses a **hardcoded login** at `/admin/login`:
 
-```sql
-insert into public.platform_admins (user_id)
-select id from auth.users where email = 'your@email.com'
-on conflict do nothing;
-```
+- Username: `admin`
+- Password: `billmoney-admin`
 
-Then visit `/admin`.
+This is independent of Supabase Auth. Change credentials in `src/lib/admin/credentials.ts` when ready. Set trial duration under **Admin → Settings**. Record tenant payments under **Admin → Subscriptions**.
 
 ### Hosted Supabase
 
@@ -159,23 +149,13 @@ Forced **Midnight Gold** dark UI (`html.dark`): charcoal surfaces, gold accent `
 ## Security checklist
 
 - No service role in the browser
-- Fee % and fee amounts never trusted from the client
-- Platform fee is 1% of finalized bill volume (no subscription tiers)
 - Tenant cannot select `platform_fee_records`
-- Non-admins redirected away from `/admin`
+- Owner admin gated by signed cookie; non-owners redirected from `/admin`
 - Storage paths scoped by `{tenant_id}/…`
+- Expired trials blocked from POS / mutating actions
 
 ## Known limitations
 
-- Dynamic UPI amount QR not primary (schema ready)
-- WhatsApp invoice delivery (Cloud API + Open WhatsApp fallback)
-- No payment gateway required for tenant checkout
-- Seed promotes first auth user to platform admin (local convenience)
-
-## Recommended next features
-
-- Payment provider webhooks for UPI confirmation
-- Dynamic UPI intent QR with amount + invoice ref
-- Staff invite emails
-- Export revenue CSV for platform ops
-# billmoney
+- No payment gateway for the ₹999 SaaS fee (owner records payment in admin)
+- Dynamic UPI amount QR not primary
+- Staff invite emails not built yet

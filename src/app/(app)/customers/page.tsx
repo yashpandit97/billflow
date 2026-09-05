@@ -16,7 +16,7 @@ export default async function CustomersPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Customers</h1>
         <p className="text-sm text-muted-foreground">
-          Keep customer details handy for invoices and history.
+          Optional — save customer names and WhatsApp numbers for faster billing.
         </p>
       </div>
 
@@ -25,7 +25,7 @@ export default async function CustomersPage() {
           <EmptyState
             icon={Users}
             title="No customers yet"
-            description="Add customers to attach them to bills and track history."
+            description="Add a customer when you want to save their number for WhatsApp invoices. Walk-ins work without this."
           />
           <CustomersManager customers={[]} />
         </div>

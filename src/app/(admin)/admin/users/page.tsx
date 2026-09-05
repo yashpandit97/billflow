@@ -19,9 +19,6 @@ export default async function AdminUsersPage() {
         .in("user_id", userIds)
     : { data: [] };
 
-  const { data: admins } = await supabase.from("platform_admins").select("user_id");
-  const adminSet = new Set((admins ?? []).map((a) => a.user_id));
-
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
       <div>
@@ -39,7 +36,6 @@ export default async function AdminUsersPage() {
               <th className="px-3 py-2 font-medium">Businesses</th>
               <th className="px-3 py-2 font-medium">Role</th>
               <th className="px-3 py-2 font-medium">Signed up</th>
-              <th className="px-3 py-2 font-medium">Flags</th>
             </tr>
           </thead>
           <tbody>
@@ -68,19 +64,15 @@ export default async function AdminUsersPage() {
                   <td className="px-3 py-2 text-muted-foreground">
                     {format(new Date(p.created_at), "dd MMM yyyy")}
                   </td>
-                  <td className="px-3 py-2">
-                    {adminSet.has(p.id) ? (
-                      <span className="text-xs text-primary">Platform admin</span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
                 </tr>
               );
             })}
             {!profiles?.length ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">
+                <td
+                  colSpan={4}
+                  className="px-3 py-8 text-center text-muted-foreground"
+                >
                   No users yet.
                 </td>
               </tr>

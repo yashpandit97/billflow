@@ -1,11 +1,20 @@
 import { REFERRAL_COOKIE, normalizeReferralCode } from "@/lib/referral/constants";
+import {
+  OWNER_ADMIN_COOKIE,
+  verifyOwnerAdminToken,
+} from "@/lib/admin/session";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      headers: requestHeaders,
+    },
   });
 
   const pathname = request.nextUrl.pathname;
@@ -17,6 +26,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/reset-password");
 
   const isOnboardingRoute = pathname.startsWith("/onboarding");
+  const isAdminLoginRoute = pathname === "/admin/login";
   const isAdminRoute = pathname.startsWith("/admin");
   const isMarketingRoute =
     pathname === "/" ||
@@ -25,17 +35,49 @@ export async function updateSession(request: NextRequest) {
     pathname === "/privacy" ||
     pathname === "/terms";
 
+  const isOAuthRoute = pathname.startsWith("/auth/");
+
   const isPublicRoute =
     isAuthRoute ||
-    pathname.startsWith("/auth/") ||
+    isAdminLoginRoute ||
+    isOAuthRoute ||
     pathname.startsWith("/api/whatsapp/webhook") ||
     pathname.startsWith("/m/") ||
     isMarketingRoute;
 
   // Do not touch auth cookies during the Google OAuth start/callback.
   // On Cloudflare, middleware Set-Cookie can drop the session the callback sets.
-  if (pathname.startsWith("/auth/")) {
-    return NextResponse.next({ request });
+  if (isOAuthRoute) {
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  }
+
+  // Owner admin cookie gate (independent of Supabase auth)
+  if (isAdminRoute) {
+    const ownerToken = request.cookies.get(OWNER_ADMIN_COOKIE)?.value;
+    const isOwner = await verifyOwnerAdminToken(ownerToken);
+
+    if (isAdminLoginRoute) {
+      if (isOwner) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin";
+        return NextResponse.redirect(url);
+      }
+      return NextResponse.next({
+        request: { headers: requestHeaders },
+      });
+    }
+
+    if (!isOwner) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      return NextResponse.redirect(url);
+    }
+
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
   const supabaseEnv = await getSupabasePublicEnv();
@@ -61,7 +103,7 @@ export async function updateSession(request: NextRequest) {
           request.cookies.set(name, value)
         );
         supabaseResponse = NextResponse.next({
-          request,
+          request: { headers: requestHeaders },
         });
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options)
@@ -93,32 +135,9 @@ export async function updateSession(request: NextRequest) {
 
   // Logged-in users hitting auth pages or the marketing home go into the app.
   if (user && (isAuthRoute || pathname === "/")) {
-    const { data: admin } = await supabase
-      .from("platform_admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
     const url = request.nextUrl.clone();
-    url.pathname = admin ? "/admin" : "/dashboard";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
-  }
-
-  // Platform admin area: skip tenant onboarding requirement
-  if (user && isAdminRoute) {
-    const { data: admin } = await supabase
-      .from("platform_admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (!admin) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
-    }
-
-    return supabaseResponse;
   }
 
   if (
@@ -138,19 +157,6 @@ export async function updateSession(request: NextRequest) {
       .limit(1);
 
     if (!memberships?.length) {
-      // Platform-only admins without a business go to /admin
-      const { data: admin } = await supabase
-        .from("platform_admins")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (admin) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/admin";
-        return NextResponse.redirect(url);
-      }
-
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding";
       return NextResponse.redirect(url);

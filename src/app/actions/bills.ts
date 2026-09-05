@@ -8,6 +8,7 @@ import { getActiveMembership } from "@/lib/auth/session";
 import { toMinorUnits } from "@/lib/currency/format";
 import { defaultPaymentStatus } from "@/lib/billing/payment-status";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import { assertTenantCanUseApp } from "@/lib/subscription/service";
 import {
   createBillSchema,
   createOpenTabSchema,
@@ -159,7 +160,17 @@ function revalidateBillPaths(billId?: string) {
   if (billId) revalidatePath(`/bills/${billId}`);
 }
 
+async function requireActiveSubscription() {
+  const membership = await getActiveMembership();
+  const gate = await assertTenantCanUseApp(membership.supabase, membership.tenantId);
+  if (!gate.ok) return { membership, error: gate.error as string };
+  return { membership, error: undefined as string | undefined };
+}
+
 export async function createBillAction(input: unknown): Promise<BillActionResult> {
+  const gated = await requireActiveSubscription();
+  if (gated.error) return { error: gated.error };
+
   const parsed = createBillSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid bill" };
@@ -277,6 +288,9 @@ export async function createBillAction(input: unknown): Promise<BillActionResult
 }
 
 export async function createOpenTabAction(input: unknown): Promise<BillActionResult> {
+  const gated = await requireActiveSubscription();
+  if (gated.error) return { error: gated.error };
+
   const parsed = createOpenTabSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid tab" };
@@ -351,6 +365,9 @@ export async function createOpenTabAction(input: unknown): Promise<BillActionRes
 }
 
 export async function updateDraftBillAction(input: unknown): Promise<BillActionResult> {
+  const gated = await requireActiveSubscription();
+  if (gated.error) return { error: gated.error };
+
   const parsed = updateDraftBillSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid draft" };
@@ -515,6 +532,9 @@ export async function finalizeDraftBillAction(
 }
 
 export async function cancelBillAction(billId: string) {
+  const gated = await requireActiveSubscription();
+  if (gated.error) return { error: gated.error };
+
   const { supabase, role } = await getActiveMembership();
   const perm = requirePermission(role, "bill:cancel");
   if (!perm.ok) return { error: perm.error };
@@ -533,6 +553,9 @@ export async function cancelBillAction(billId: string) {
 }
 
 export async function recordPartialRefundAction(input: unknown) {
+  const gated = await requireActiveSubscription();
+  if (gated.error) return { error: gated.error };
+
   const parsed = partialRefundSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid refund" };
@@ -562,6 +585,9 @@ export async function updatePaymentStatusAction(
   billId: string,
   paymentStatus: "pending" | "paid"
 ) {
+  const gated = await requireActiveSubscription();
+  if (gated.error) return { error: gated.error };
+
   const { supabase, tenantId, role } = await getActiveMembership();
 
   if (paymentStatus === "paid" && role === "staff") {
@@ -599,6 +625,9 @@ export async function updatePaymentStatusAction(
 }
 
 export async function duplicateBillAction(billId: string): Promise<BillActionResult> {
+  const gated = await requireActiveSubscription();
+  if (gated.error) return { error: gated.error };
+
   const { supabase, tenantId, role } = await getActiveMembership();
   const perm = requirePermission(role, "bill:create");
   if (!perm.ok) return { error: perm.error };

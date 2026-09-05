@@ -53,6 +53,8 @@ export function SettingsClient({
   cloudApiReady,
   subscriptionOverview,
   canManageBilling = false,
+  defaultTab = "profile",
+  billingOnly = false,
 }: {
   business: Business;
   members: (BusinessMember & { profiles?: Profile | null })[];
@@ -67,6 +69,7 @@ export function SettingsClient({
     status: string;
     isTrial: boolean;
     trialEndsAt: string | null;
+    trialRemaining?: string | null;
     nextBillingDate: string | null;
     freeMonthsAvailable: number;
     freeMonthsEarned: number;
@@ -74,8 +77,11 @@ export function SettingsClient({
     referralCode: string | null;
     successfulReferrals: number;
     pendingReferrals: number;
+    needsPayment?: boolean;
   } | null;
   canManageBilling?: boolean;
+  defaultTab?: string;
+  billingOnly?: boolean;
 }) {
   const [profileState, profileAction] = useActionState(
     updateBusinessProfileAction,
@@ -111,22 +117,27 @@ export function SettingsClient({
   useToastResult(qrState);
 
   return (
-    <Tabs defaultValue="profile" className="space-y-6">
+    <Tabs defaultValue={defaultTab} key={defaultTab} className="space-y-6">
       <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-        <TabsTrigger value="profile">Business Profile</TabsTrigger>
+        {!billingOnly ? (
+          <TabsTrigger value="profile">Business</TabsTrigger>
+        ) : null}
         {canManageBilling ? (
           <TabsTrigger value="billing">Billing</TabsTrigger>
         ) : null}
-        <TabsTrigger value="branding">Branding</TabsTrigger>
-        <TabsTrigger value="payment">Payment</TabsTrigger>
-        <TabsTrigger value="invoice">Invoice</TabsTrigger>
-        <TabsTrigger value="tables">Tables</TabsTrigger>
-        <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-        <TabsTrigger value="tax">Tax</TabsTrigger>
-        <TabsTrigger value="users">Users</TabsTrigger>
+        {!billingOnly ? (
+          <>
+            <TabsTrigger value="branding">Branding</TabsTrigger>
+            <TabsTrigger value="payment">Payment</TabsTrigger>
+            <TabsTrigger value="invoice">Invoice</TabsTrigger>
+            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+            <TabsTrigger value="tax">Tax</TabsTrigger>
+          </>
+        ) : null}
         <TabsTrigger value="account">Account</TabsTrigger>
       </TabsList>
 
+      {!billingOnly ? (
       <TabsContent value="profile" className="rounded-xl border border-border bg-card p-4 sm:p-6">
         <form action={profileAction} className="max-w-xl space-y-4">
           <div className="space-y-2">
@@ -187,6 +198,7 @@ export function SettingsClient({
           <SubmitButton>Save profile</SubmitButton>
         </form>
       </TabsContent>
+      ) : null}
 
       {canManageBilling && subscriptionOverview ? (
         <TabsContent value="billing">
@@ -199,13 +211,17 @@ export function SettingsClient({
             freeMonthsAvailable={subscriptionOverview.freeMonthsAvailable}
             priceLabel={subscriptionOverview.priceLabel}
             trialEndsAt={subscriptionOverview.trialEndsAt}
+            trialRemaining={subscriptionOverview.trialRemaining}
             nextBillingDate={subscriptionOverview.nextBillingDate}
             status={subscriptionOverview.status}
             isTrial={subscriptionOverview.isTrial}
+            needsPayment={subscriptionOverview.needsPayment}
           />
         </TabsContent>
       ) : null}
 
+      {!billingOnly ? (
+      <>
       <TabsContent value="branding" className="space-y-6 rounded-xl border border-border bg-card p-4 sm:p-6">
         <form action={logoAction} className="flex flex-wrap items-end gap-4">
           {business.logo_url ? (
@@ -221,8 +237,14 @@ export function SettingsClient({
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="logo">Upload logo</Label>
-            <Input id="logo" name="logo" type="file" accept="image/*" required />
+            <Label htmlFor="logo">Upload logo (PNG or JPG)</Label>
+            <Input
+              id="logo"
+              name="logo"
+              type="file"
+              accept="image/png,image/jpeg"
+              required
+            />
           </div>
           <SubmitButton>Upload</SubmitButton>
         </form>
@@ -288,8 +310,8 @@ export function SettingsClient({
           </div>
           <input type="hidden" name="payment_qr_mode" value="uploaded" />
           <p className="text-xs text-muted-foreground">
-            Upload the QR from your bank / GPay / PhonePe app. Dynamic UPI amount
-            QR is reserved for later.
+            Upload the QR from your bank, GPay, or PhonePe app. Customers scan it
+            on UPI invoices.
           </p>
           <SubmitButton>Save UPI settings</SubmitButton>
         </form>
@@ -324,7 +346,13 @@ export function SettingsClient({
           <form action={qrAction} className="flex flex-wrap items-end gap-3">
             <div className="space-y-2">
               <Label htmlFor="qr">Upload / replace QR image</Label>
-              <Input id="qr" name="qr" type="file" accept="image/*" required />
+              <Input
+                id="qr"
+                name="qr"
+                type="file"
+                accept="image/png,image/jpeg"
+                required
+              />
             </div>
             <SubmitButton>Upload QR</SubmitButton>
           </form>
@@ -366,23 +394,28 @@ export function SettingsClient({
               className="mt-0.5 size-4 rounded border"
             />
             <span>
-              <span className="font-medium">Restaurant / open tabs mode</span>
+              <span className="font-medium">
+                Cafe / restaurant mode (tables &amp; open bills)
+              </span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
-                Track multiple open bills (tables / takeaway) on Billing, and
-                enable per-table QR guest menus.
+                Keep multiple open bills for tables or takeaway, and print a QR
+                menu per table.
               </span>
             </span>
           </label>
           <SubmitButton>Save invoice settings</SubmitButton>
         </form>
-      </TabsContent>
 
-      <TabsContent value="tables" className="rounded-xl border border-border bg-card p-4 sm:p-6">
-        <TablesSettings
-          slug={business.slug}
-          initialTables={tables}
-          openTabsEnabled={business.open_tabs_enabled}
-        />
+        {business.open_tabs_enabled ? (
+          <div className="mt-8 border-t border-border pt-6">
+            <h3 className="mb-3 text-sm font-medium">Tables &amp; QR menus</h3>
+            <TablesSettings
+              slug={business.slug}
+              initialTables={tables}
+              openTabsEnabled={business.open_tabs_enabled}
+            />
+          </div>
+        ) : null}
       </TabsContent>
 
       <TabsContent value="whatsapp" className="rounded-xl border border-border bg-card p-4 sm:p-6">
@@ -390,9 +423,9 @@ export function SettingsClient({
           <div>
             <h3 className="font-medium">WhatsApp invoices</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Invoice messages are sent from BillMoney’s WhatsApp Business
-              number (not your personal WhatsApp). Customers still see your
-              business name in the message body.
+              After you create a bill, tap <strong>Send on WhatsApp</strong> to
+              share the PDF with your customer. Messages go from BillMoney&apos;s
+              WhatsApp number; your business name appears in the message.
             </p>
           </div>
           <p
@@ -403,8 +436,8 @@ export function SettingsClient({
             }
           >
             {cloudApiReady
-              ? "Official WhatsApp sending is available for your invoices."
-              : "Official WhatsApp sending is not connected yet. You can still use Open WhatsApp to send manually."}
+              ? "Official WhatsApp sending is ready."
+              : "Official WhatsApp sending is not connected yet. You can still open WhatsApp manually from a bill."}
           </p>
         </div>
       </TabsContent>
@@ -418,7 +451,7 @@ export function SettingsClient({
               defaultChecked={business.tax_enabled}
               className="size-4 rounded border"
             />
-            Enable tax on invoices
+            Add GST / tax on invoices
           </label>
           <div className="space-y-2">
             <Label htmlFor="default_tax_rate_percent">Default tax %</Label>
@@ -444,32 +477,8 @@ export function SettingsClient({
           <SubmitButton>Save tax settings</SubmitButton>
         </form>
       </TabsContent>
-
-      <TabsContent value="users" className="rounded-xl border border-border bg-card p-4 sm:p-6">
-        <p className="mb-4 text-sm text-muted-foreground">
-          Team invites come later. Roles (owner, admin, staff) are ready in the schema.
-        </p>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 font-medium">Member</th>
-                <th className="px-3 py-2 font-medium">Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m.id} className="border-t border-border">
-                  <td className="px-3 py-2">
-                    {m.profiles?.full_name || m.user_id}
-                  </td>
-                  <td className="px-3 py-2 capitalize">{m.role}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </TabsContent>
+      </>
+      ) : null}
 
       <TabsContent value="account" className="rounded-xl border border-border bg-card p-4 sm:p-6">
         <div className="max-w-md space-y-4">
@@ -478,15 +487,23 @@ export function SettingsClient({
             <p className="font-medium">{profile?.full_name || userEmail}</p>
             <p className="text-sm text-muted-foreground">{userEmail}</p>
           </div>
+          {members.length > 0 ? (
+            <div>
+              <p className="mb-2 text-sm font-medium">Team on this business</p>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                {members.map((m) => (
+                  <li key={m.id} className="flex justify-between gap-2">
+                    <span>{m.profiles?.full_name || m.user_id.slice(0, 8)}</span>
+                    <span className="capitalize">{m.role}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
             <p className="font-medium">₹999/month per business</p>
-            <p className="text-sm text-muted-foreground">
-              One plan, all features. Covers your whole team — no per-seat fees.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Your first 30 days are free. One subscription covers your whole
-              team — owners and staff. Manage billing and referrals in the Billing
-              tab.
+            <p className="mt-1 text-muted-foreground">
+              One plan for your whole team. Manage your plan in the Billing tab.
             </p>
           </div>
           <Button

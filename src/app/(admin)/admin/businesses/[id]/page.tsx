@@ -1,3 +1,4 @@
+import { AdminSubscriptionActions } from "@/components/admin/admin-subscription-actions";
 import { BusinessTrendCharts } from "@/components/admin/admin-charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requirePlatformAdmin } from "@/lib/auth/admin";
@@ -95,7 +96,8 @@ export default async function AdminBusinessDetailPage({
   const lastActivity = bills?.length
     ? bills[bills.length - 1]!.created_at
     : business.created_at;
-  const isActive = new Date(lastActivity).getTime() >= new Date(since30).getTime();
+  const isActive =
+    new Date(lastActivity).getTime() >= new Date(since30).getTime();
 
   const profile = owner?.profiles as
     | { full_name: string | null }
@@ -119,6 +121,10 @@ export default async function AdminBusinessDetailPage({
     };
   });
 
+  const subStatus = subscription?.is_complimentary
+    ? "Complimentary"
+    : (subscription?.status ?? business.subscription_status);
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
       <div className="flex items-start justify-between gap-4">
@@ -127,7 +133,7 @@ export default async function AdminBusinessDetailPage({
             {business.name}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Read-only platform analytics for this business.
+            Platform analytics and subscription controls for this business.
           </p>
         </div>
         <Link
@@ -155,9 +161,7 @@ export default async function AdminBusinessDetailPage({
           </div>
           <div>
             <p className="text-muted-foreground">Subscription</p>
-            <p className="font-medium capitalize">
-              {subscription?.status ?? business.subscription_status}
-            </p>
+            <p className="font-medium capitalize">{subStatus}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Plan</p>
@@ -165,7 +169,9 @@ export default async function AdminBusinessDetailPage({
           </div>
           <div>
             <p className="text-muted-foreground">Referral code</p>
-            <p className="font-mono font-medium">{business.referral_code || "—"}</p>
+            <p className="font-mono font-medium">
+              {business.referral_code || "—"}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground">Successful referrals</p>
@@ -181,6 +187,21 @@ export default async function AdminBusinessDetailPage({
           </div>
         </CardContent>
       </Card>
+
+      {subscription ? (
+        <Card className="border-border bg-card shadow-none">
+          <CardHeader>
+            <CardTitle className="text-base">Subscription controls</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AdminSubscriptionActions
+              tenantId={id}
+              status={subscription.status}
+              isComplimentary={!!subscription.is_complimentary}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
@@ -210,12 +231,15 @@ export default async function AdminBusinessDetailPage({
               <li key={b.id} className="flex justify-between py-2">
                 <span>{b.invoice_number || b.id.slice(0, 8)}</span>
                 <span className="text-muted-foreground">
-                  {format(new Date(b.created_at), "dd MMM yyyy")} · {money(b.total)}
+                  {format(new Date(b.created_at), "dd MMM yyyy")} ·{" "}
+                  {money(b.total)}
                 </span>
               </li>
             ))}
             {!recentBills?.length ? (
-              <li className="py-4 text-center text-muted-foreground">No invoices yet.</li>
+              <li className="py-4 text-center text-muted-foreground">
+                No invoices yet.
+              </li>
             ) : null}
           </ul>
         </CardContent>
