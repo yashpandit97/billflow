@@ -12,11 +12,16 @@ import { useActionState } from "react";
 
 const initial: ActionResult = {};
 
-export function SignupForm() {
+export function SignupForm({ authError }: { authError?: string }) {
   const [state, formAction] = useActionState(signUpAction, initial);
 
   return (
     <div className="space-y-4">
+      {authError ? (
+        <p className="rounded-md bg-destructive/15 px-3 py-2 text-sm text-destructive">
+          {authError}
+        </p>
+      ) : null}
       <GoogleAuthButton next="/onboarding" label="Continue with Google" />
       <AuthMethodDivider />
       <form action={formAction} className="space-y-4">

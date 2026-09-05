@@ -1,25 +1,34 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  appOriginFromRequest,
+  applyOAuthCookies,
+  createOAuthServerClient,
+  safeNextPath,
+} from "@/lib/auth/oauth";
+import { NextRequest, NextResponse } from "next/server";
 
-function safeNextPath(next: string | null): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/dashboard";
-  }
-  return next;
-}
+export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const next = safeNextPath(searchParams.get("next"));
+export async function GET(request: NextRequest) {
+  const origin = appOriginFromRequest(request);
+  const code = request.nextUrl.searchParams.get("code");
+  const next = safeNextPath(request.nextUrl.searchParams.get("next"));
+  const fail = () => NextResponse.redirect(`${origin}/login?error=auth`);
 
-  if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+  if (!code) {
+    return fail();
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  const { supabase, cookiesToSet } = await createOAuthServerClient(request);
+  if (!supabase) {
+    return fail();
+  }
+
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    return fail();
+  }
+
+  const response = NextResponse.redirect(`${origin}${next}`);
+  applyOAuthCookies(response, cookiesToSet, origin);
+  return response;
 }

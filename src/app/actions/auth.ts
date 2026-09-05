@@ -15,8 +15,20 @@ export type ActionResult = {
   success?: string;
 };
 
+function unwrapAuthErrorMessage(message: string): string {
+  const trimmed = message.trim();
+  if (!trimmed.startsWith("{")) return message;
+  try {
+    const parsed = JSON.parse(trimmed) as { msg?: string; message?: string };
+    return parsed.msg || parsed.message || message;
+  } catch {
+    return message;
+  }
+}
+
 function supabaseUnavailableMessage(error: { message: string }) {
-  const msg = error.message.toLowerCase();
+  const raw = unwrapAuthErrorMessage(error.message);
+  const msg = raw.toLowerCase();
   if (
     msg.includes("fetch failed") ||
     msg.includes("econnrefused") ||
@@ -25,7 +37,7 @@ function supabaseUnavailableMessage(error: { message: string }) {
   ) {
     return "Cannot reach Supabase. Start it with `npx supabase start`, then copy keys into `.env.local`.";
   }
-  return error.message;
+  return raw;
 }
 
 export async function signUpAction(
@@ -101,44 +113,6 @@ export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
-}
-
-export async function signInWithGoogleAction(next?: string): Promise<
-  ActionResult & { url?: string }
-> {
-  try {
-    const supabase = await createClient();
-    const siteUrl =
-      (
-        process.env.SITE_URL ||
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        "http://localhost:3000"
-      ).replace(/\/$/, "");
-    const redirectTo = new URL(`${siteUrl}/auth/callback`);
-    if (next && next.startsWith("/") && !next.startsWith("//")) {
-      redirectTo.searchParams.set("next", next);
-    }
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: redirectTo.toString(),
-        skipBrowserRedirect: true,
-      },
-    });
-
-    if (error) {
-      return { error: supabaseUnavailableMessage(error) };
-    }
-    if (!data.url) {
-      return { error: "Could not start Google sign-in. Check the Google provider in Supabase." };
-    }
-
-    return { url: data.url };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Google sign-in failed";
-    return { error: supabaseUnavailableMessage({ message }) };
-  }
 }
 
 export async function forgotPasswordAction(

@@ -21,10 +21,14 @@ export function LoginForm({
   authError?: string;
 }) {
   const [state, formAction] = useActionState(loginAction, initial);
-  const error = state.error || authError;
 
   return (
     <div className="space-y-4">
+      {authError ? (
+        <p className="rounded-md bg-destructive/15 px-3 py-2 text-sm text-destructive">
+          {authError}
+        </p>
+      ) : null}
       <GoogleAuthButton next={next} />
       <AuthMethodDivider />
       <form action={formAction} className="space-y-4">
@@ -51,9 +55,9 @@ export function LoginForm({
             required
           />
         </div>
-        {error ? (
+        {state.error ? (
           <p className="rounded-md bg-destructive/15 px-3 py-2 text-sm text-destructive">
-            {error}
+            {state.error}
           </p>
         ) : null}
         <SubmitButton className="w-full">Sign in</SubmitButton>

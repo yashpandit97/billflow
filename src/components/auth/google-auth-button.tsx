@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { signInWithGoogleAction } from "@/app/actions/auth";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -34,21 +33,19 @@ export function GoogleAuthButton({
   next?: string;
   label?: string;
 }) {
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
   function handleGoogleSignIn() {
-    setError(null);
-    startTransition(async () => {
-      const result = await signInWithGoogleAction(next);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      if (result.url) {
-        window.location.assign(result.url);
-      }
-    });
+    setPending(true);
+    const params = new URLSearchParams();
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      params.set("next", next);
+    }
+    if (window.location.pathname.startsWith("/signup")) {
+      params.set("returnTo", "/signup");
+    }
+    const query = params.toString();
+    window.location.assign(query ? `/auth/google?${query}` : "/auth/google");
   }
 
   return (
@@ -63,11 +60,6 @@ export function GoogleAuthButton({
         <GoogleIcon className="size-4" />
         {pending ? "Redirecting…" : label}
       </Button>
-      {error ? (
-        <p className="rounded-md bg-destructive/15 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
     </div>
   );
 }

@@ -27,10 +27,16 @@ export async function updateSession(request: NextRequest) {
 
   const isPublicRoute =
     isAuthRoute ||
-    pathname.startsWith("/auth/callback") ||
+    pathname.startsWith("/auth/") ||
     pathname.startsWith("/api/whatsapp/webhook") ||
     pathname.startsWith("/m/") ||
     isMarketingRoute;
+
+  // Do not touch auth cookies during the Google OAuth start/callback.
+  // On Cloudflare, middleware Set-Cookie can drop the session the callback sets.
+  if (pathname.startsWith("/auth/")) {
+    return NextResponse.next({ request });
+  }
 
   const supabaseEnv = await getSupabasePublicEnv();
 
@@ -121,7 +127,7 @@ export async function updateSession(request: NextRequest) {
     !isAuthRoute &&
     !isAdminRoute &&
     !isMarketingRoute &&
-    !pathname.startsWith("/auth/callback") &&
+    !pathname.startsWith("/auth/") &&
     !pathname.startsWith("/api/whatsapp/webhook") &&
     !pathname.startsWith("/m/")
   ) {

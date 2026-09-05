@@ -22,13 +22,29 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "http://127.0.0.1:3000/auth/callback",
+]
 jwt_expiry = 3600
 enable_signup = true
 
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+
+# Google OAuth is off until you add a Google Cloud OAuth 2.0 Web client.
+# 1. Google Cloud Console → APIs & Services → Credentials → Create OAuth client (Web)
+# 2. Authorized JavaScript origins: http://localhost:3000
+# 3. Authorized redirect URI: http://127.0.0.1:54321/auth/v1/callback
+#    Hosted: https://<project-ref>.supabase.co/auth/v1/callback
+# 4. Set enabled = true and paste client_id / secret below
+# 5. Restart: npx supabase stop && npx supabase start
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+skip_nonce_check = false
 
 [storage]
 enabled = true
